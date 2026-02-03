@@ -74,6 +74,32 @@ const StudentOutpass = () => {
 
       if (error) throw error;
 
+      // Get HOD email to send notification
+      const { data: hodData } = await supabase
+        .from("staff_members")
+        .select("email, name")
+        .eq("is_hod", true)
+        .single();
+
+      if (hodData?.email) {
+        // Send email notification to HOD
+        await supabase.functions.invoke("send-email", {
+          body: {
+            to: hodData.email,
+            subject: `New Outpass Request from ${profile.full_name}`,
+            html: `
+              <h2>New Outpass Request</h2>
+              <p><strong>Student:</strong> ${profile.full_name}</p>
+              <p><strong>Destination:</strong> ${destination}</p>
+              <p><strong>Reason:</strong> ${reason}</p>
+              <p><strong>Departure:</strong> ${new Date(departureTime).toLocaleString()}</p>
+              <p><strong>Return:</strong> ${new Date(returnTime).toLocaleString()}</p>
+              <p>Please review and approve/reject this request.</p>
+            `,
+          },
+        });
+      }
+
       toast.success("Outpass request submitted! Awaiting HOD approval.");
       setDialogOpen(false);
       setReason("");
