@@ -92,6 +92,25 @@ const StudentMeetings = () => {
 
       if (error) throw error;
 
+      // Get selected tutor's email to send notification
+      const selectedTutor = staffMembers.find((s) => s.id === selectedStaff);
+      if (selectedTutor?.email) {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            to: selectedTutor.email,
+            subject: `New Meeting Request from ${profile.full_name}`,
+            html: `
+              <h2>New Meeting Request</h2>
+              <p><strong>Student:</strong> ${profile.full_name}</p>
+              <p><strong>Meeting Type:</strong> ${meetingType}</p>
+              <p><strong>Purpose:</strong> ${purpose}</p>
+              <p><strong>Requested Time:</strong> ${new Date(requestedTime).toLocaleString()}</p>
+              <p>Please review and respond to this meeting request.</p>
+            `,
+          },
+        });
+      }
+
       toast.success("Meeting request submitted!");
       setDialogOpen(false);
       setSelectedStaff("");
