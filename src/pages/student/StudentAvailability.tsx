@@ -13,6 +13,7 @@ import {
   Legend,
 } from "recharts";
 import { Users, Clock, Calendar, CheckCircle } from "lucide-react";
+import { StaffPresenceWidget } from "@/components/student/StaffPresenceWidget";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -87,6 +88,9 @@ const StudentAvailability = () => {
             View when tutors are available for meetings. Most available in afternoons (Mon-Sat).
           </p>
         </div>
+
+        {/* Live Staff Presence */}
+        <StaffPresenceWidget />
 
         {/* Availability Chart */}
         <Card>

@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import {
@@ -20,7 +13,7 @@ import {
   Users,
   BookOpen,
   Mail,
-  Lock,
+  CalendarDays,
   User,
   Phone,
   Building,
@@ -38,12 +31,11 @@ const Login = () => {
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
+  const [loginDob, setLoginDob] = useState("");
 
   // Signup form state
   const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupDob, setSignupDob] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
@@ -51,10 +43,13 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!loginDob) {
+      toast.error("Please enter your date of birth");
+      return;
+    }
     setLoading(true);
     try {
-      await signIn(loginEmail, loginPassword);
-      // Navigation will be handled by auth state change
+      await signIn(loginEmail, loginDob);
     } catch (error) {
       console.error(error);
     } finally {
@@ -64,23 +59,19 @@ const Login = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (signupPassword !== signupConfirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
 
-    if (signupPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!signupDob) {
+      toast.error("Please enter your date of birth");
       return;
     }
 
     setLoading(true);
     try {
-      await signUp(signupEmail, signupPassword, fullName, selectedRole, {
+      await signUp(signupEmail, signupDob, fullName, selectedRole, {
         phone,
         department,
         rollNumber,
+        dateOfBirth: signupDob,
       });
       setActiveTab("login");
     } catch (error) {
@@ -92,8 +83,8 @@ const Login = () => {
 
   // Redirect if already logged in
   if (profile) {
-    const redirectPath = 
-      profile.role === "admin" ? "/admin" : 
+    const redirectPath =
+      profile.role === "admin" ? "/admin" :
       profile.role === "staff" ? "/staff" : "/student";
     navigate(redirectPath);
     return null;
@@ -145,16 +136,15 @@ const Login = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="login-dob">Date of Birth</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="••••••••"
+                        id="login-dob"
+                        type="date"
                         className="pl-10"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
+                        value={loginDob}
+                        onChange={(e) => setLoginDob(e.target.value)}
                         required
                       />
                     </div>
@@ -229,36 +219,18 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="signup-password"
-                          type="password"
-                          placeholder="••••••••"
-                          className="pl-10"
-                          value={signupPassword}
-                          onChange={(e) => setSignupPassword(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-confirm">Confirm</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="signup-confirm"
-                          type="password"
-                          placeholder="••••••••"
-                          className="pl-10"
-                          value={signupConfirmPassword}
-                          onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                          required
-                        />
-                      </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-dob">Date of Birth</Label>
+                    <div className="relative">
+                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="signup-dob"
+                        type="date"
+                        className="pl-10"
+                        value={signupDob}
+                        onChange={(e) => setSignupDob(e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
 
@@ -317,10 +289,6 @@ const Login = () => {
                   >
                     {loading ? "Creating account..." : "Create Account"}
                   </Button>
-
-                  <p className="text-xs text-muted-foreground text-center">
-                    A verification email will be sent to your email address.
-                  </p>
                 </form>
               </TabsContent>
             </Tabs>

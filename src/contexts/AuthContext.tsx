@@ -9,8 +9,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: UserRole, additionalData?: Record<string, string>) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, dateOfBirth: string, fullName: string, role: UserRole, additionalData?: Record<string, string>) => Promise<void>;
+  signIn: (email: string, dateOfBirth: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -89,13 +89,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (
     email: string,
-    password: string,
+    dateOfBirth: string,
     fullName: string,
     role: UserRole,
     additionalData?: Record<string, string>
   ) => {
     setLoading(true);
     try {
+      // Use DOB as the password
+      const password = dateOfBirth;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -115,11 +118,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           department: additionalData?.department,
           roll_number: additionalData?.rollNumber,
           phone: additionalData?.phone,
+          date_of_birth: additionalData?.dateOfBirth || dateOfBirth,
         });
 
         if (profileError) throw profileError;
 
-        toast.success("Account created! Please check your email to verify your account.");
+        toast.success("Account created! You can now sign in.");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
@@ -129,12 +133,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, dateOfBirth: string) => {
     setLoading(true);
     try {
+      // Use DOB as the password
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password: dateOfBirth,
       });
 
       if (error) throw error;

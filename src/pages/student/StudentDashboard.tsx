@@ -13,6 +13,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
+import { StaffPresenceWidget } from "@/components/student/StaffPresenceWidget";
 
 const StudentDashboard = () => {
   const { profile } = useAuth();
@@ -237,6 +238,9 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Live Staff Presence */}
+        <StaffPresenceWidget compact />
       </div>
     </DashboardLayout>
   );
