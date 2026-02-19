@@ -1,23 +1,16 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import {
-  GraduationCap,
   Shield,
   Users,
   BookOpen,
-  Mail,
   CalendarDays,
-  User,
-  Phone,
-  Building,
-  Hash,
 } from "lucide-react";
 import { UserRole } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -25,17 +18,13 @@ import { toast } from "sonner";
 const Login = () => {
   const navigate = useNavigate();
   const { signIn, signUp, profile } = useAuth();
-  const [activeTab, setActiveTab] = useState("login");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginDob, setLoginDob] = useState("");
-
-  // Signup form state
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupDob, setSignupDob] = useState("");
+  // Form state
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
@@ -43,13 +32,10 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginDob) {
-      toast.error("Please enter your date of birth");
-      return;
-    }
+    if (!dob) { toast.error("Please enter your date of birth"); return; }
     setLoading(true);
     try {
-      await signIn(loginEmail, loginDob);
+      await signIn(email, dob);
     } catch (error) {
       console.error(error);
     } finally {
@@ -59,21 +45,17 @@ const Login = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!signupDob) {
-      toast.error("Please enter your date of birth");
-      return;
-    }
-
+    if (!dob) { toast.error("Please enter your date of birth"); return; }
     setLoading(true);
     try {
-      await signUp(signupEmail, signupDob, fullName, selectedRole, {
+      await signUp(email, dob, fullName, selectedRole, {
         phone,
         department,
         rollNumber,
-        dateOfBirth: signupDob,
+        dateOfBirth: dob,
       });
-      setActiveTab("login");
+      setIsSignUp(false);
+      toast.success("Account created! You can now log in.");
     } catch (error) {
       console.error(error);
     } finally {
@@ -81,7 +63,6 @@ const Login = () => {
     }
   };
 
-  // Redirect if already logged in
   if (profile) {
     const redirectPath =
       profile.role === "admin" ? "/admin" :
@@ -90,209 +71,188 @@ const Login = () => {
     return null;
   }
 
-  const roleIcons = {
-    admin: Shield,
-    staff: Users,
-    student: BookOpen,
-  };
+  const roleIcons = { admin: Shield, staff: Users, student: BookOpen };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <main className="pt-24 pb-16 px-4">
-        <div className="container mx-auto max-w-lg">
-          <div className="text-center mb-8 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
-              <GraduationCap className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h1 className="text-3xl font-display font-bold mb-2">Welcome to SmartStaff</h1>
-            <p className="text-muted-foreground">Sign in to access your portal</p>
-          </div>
+      <main className="flex-1 flex items-center justify-center px-4 pt-20 pb-12">
+        <div className="w-full max-w-md">
+          {/* Login Form */}
+          {!isSignUp ? (
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Email"
+                  className="h-11 border-border bg-background rounded-md"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="bg-card rounded-2xl shadow-card p-6 md:p-8 animate-slide-up">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
+              <div className="space-y-1.5">
+                <Label htmlFor="dob" className="text-sm font-medium text-foreground">
+                  Date of Birth
+                </Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  className="h-11 border-border bg-background rounded-md"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  required
+                />
+              </div>
 
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="pl-10"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                      />
-                    </div>
+              <Button
+                type="submit"
+                className="w-full h-11 bg-[hsl(174,50%,42%)] hover:bg-[hsl(174,50%,36%)] text-white font-medium rounded-md"
+                disabled={loading}
+              >
+                {loading ? "Logging in..." : "Log in"}
+              </Button>
+
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(true)}
+                  className="text-primary hover:underline"
+                >
+                  Don't have an account?
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Sign Up Form */
+            <form onSubmit={handleSignup} className="space-y-4">
+              {/* Role Selection */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-foreground">I am a</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["admin", "staff", "student"] as UserRole[]).map((role) => {
+                    const Icon = roleIcons[role];
+                    return (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setSelectedRole(role)}
+                        className={`p-2.5 rounded-md border transition-all flex flex-col items-center gap-1 text-xs font-medium capitalize ${
+                          selectedRole === role
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/50 text-muted-foreground"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {role}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-name" className="text-sm font-medium text-foreground">Full Name</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  placeholder="Full Name"
+                  className="h-11 border-border bg-background rounded-md"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-email" className="text-sm font-medium text-foreground">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="Email"
+                  className="h-11 border-border bg-background rounded-md"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-dob" className="text-sm font-medium text-foreground">Date of Birth</Label>
+                <Input
+                  id="signup-dob"
+                  type="date"
+                  className="h-11 border-border bg-background rounded-md"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-phone" className="text-sm font-medium text-foreground">Phone</Label>
+                <Input
+                  id="signup-phone"
+                  type="tel"
+                  placeholder="Phone"
+                  className="h-11 border-border bg-background rounded-md"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              {selectedRole === "student" && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-roll" className="text-sm font-medium text-foreground">Roll Number</Label>
+                    <Input
+                      id="signup-roll"
+                      type="text"
+                      placeholder="Roll Number"
+                      className="h-11 border-border bg-background rounded-md"
+                      value={rollNumber}
+                      onChange={(e) => setRollNumber(e.target.value)}
+                    />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="login-dob">Date of Birth</Label>
-                    <div className="relative">
-                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="login-dob"
-                        type="date"
-                        className="pl-10"
-                        value={loginDob}
-                        onChange={(e) => setLoginDob(e.target.value)}
-                        required
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-dept" className="text-sm font-medium text-foreground">Department</Label>
+                    <Input
+                      id="signup-dept"
+                      type="text"
+                      placeholder="Department"
+                      className="h-11 border-border bg-background rounded-md"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                    />
                   </div>
+                </>
+              )}
 
-                  <Button
-                    type="submit"
-                    className="w-full gradient-primary text-primary-foreground"
-                    disabled={loading}
-                  >
-                    {loading ? "Signing in..." : "Sign In"}
-                  </Button>
-                </form>
-              </TabsContent>
+              <Button
+                type="submit"
+                className="w-full h-11 bg-[hsl(174,50%,42%)] hover:bg-[hsl(174,50%,36%)] text-white font-medium rounded-md"
+                disabled={loading}
+              >
+                {loading ? "Creating account..." : "Sign Up"}
+              </Button>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  {/* Role Selection */}
-                  <div className="space-y-2">
-                    <Label>I am a</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(["admin", "staff", "student"] as UserRole[]).map((role) => {
-                        const Icon = roleIcons[role];
-                        return (
-                          <button
-                            key={role}
-                            type="button"
-                            onClick={() => setSelectedRole(role)}
-                            className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
-                              selectedRole === role
-                                ? "border-primary bg-primary/10"
-                                : "border-border hover:border-primary/50"
-                            }`}
-                          >
-                            <Icon className="w-5 h-5" />
-                            <span className="text-xs font-medium capitalize">{role}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        className="pl-10"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="pl-10"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-dob">Date of Birth</Label>
-                    <div className="relative">
-                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="signup-dob"
-                        type="date"
-                        className="pl-10"
-                        value={signupDob}
-                        onChange={(e) => setSignupDob(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Phone</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="signup-phone"
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        className="pl-10"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {selectedRole === "student" && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-roll">Roll Number</Label>
-                        <div className="relative">
-                          <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="signup-roll"
-                            type="text"
-                            placeholder="CS21001"
-                            className="pl-10"
-                            value={rollNumber}
-                            onChange={(e) => setRollNumber(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-dept">Department</Label>
-                        <div className="relative">
-                          <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="signup-dept"
-                            type="text"
-                            placeholder="Computer Science"
-                            className="pl-10"
-                            value={department}
-                            onChange={(e) => setDepartment(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <Button
-                    type="submit"
-                    className="w-full gradient-primary text-primary-foreground"
-                    disabled={loading}
-                  >
-                    {loading ? "Creating account..." : "Create Account"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </div>
+              <div className="text-sm text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(false)}
+                  className="text-primary hover:underline"
+                >
+                  Already have an account? Log in
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </main>
 
