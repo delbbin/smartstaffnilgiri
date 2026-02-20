@@ -15,6 +15,8 @@ import {
   X,
   MessageSquare,
   HelpCircle,
+  Activity,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -40,7 +42,8 @@ const staffNavItems: NavItem[] = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard },
   { label: "Outpass Requests", href: "/staff/outpass", icon: FileText },
   { label: "Meeting Requests", href: "/staff/meetings", icon: Calendar },
-  { label: "My Availability", href: "/staff/availability", icon: Settings },
+  { label: "My Availability", href: "/staff/availability", icon: Clock },
+  { label: "My Attendance", href: "/staff/attendance", icon: Activity },
 ];
 
 const adminNavItems: NavItem[] = [

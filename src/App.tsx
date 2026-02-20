@@ -23,11 +23,14 @@ import StudentAvailability from "./pages/student/StudentAvailability";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffOutpass from "./pages/staff/StaffOutpass";
 import StaffMeetings from "./pages/staff/StaffMeetings";
+import StaffAttendance from "./pages/staff/StaffAttendance";
+import StaffAvailabilityManage from "./pages/staff/StaffAvailabilityManage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +107,22 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/staff/attendance"
+              element={
+                <ProtectedRoute allowedRoles={["staff"]}>
+                  <StaffAttendance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff/availability"
+              element={
+                <ProtectedRoute allowedRoles={["staff"]}>
+                  <StaffAvailabilityManage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Admin routes */}
             <Route
@@ -143,6 +162,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminFeedback />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminAnalytics />
                 </ProtectedRoute>
               }
             />
