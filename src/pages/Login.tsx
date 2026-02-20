@@ -4,13 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import {
   Shield,
   Users,
   BookOpen,
-  CalendarDays,
+  GraduationCap,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import { UserRole } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -18,11 +22,14 @@ import { toast } from "sonner";
 const Login = () => {
   const navigate = useNavigate();
   const { signIn, signUp, profile } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
 
-  // Form state
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginDob, setLoginDob] = useState("");
+
+  // Signup form state
   const [email, setEmail] = useState("");
   const [dob, setDob] = useState("");
   const [fullName, setFullName] = useState("");
@@ -32,10 +39,10 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dob) { toast.error("Please enter your date of birth"); return; }
+    if (!loginDob) { toast.error("Please enter your date of birth"); return; }
     setLoading(true);
     try {
-      await signIn(email, dob);
+      await signIn(loginEmail, loginDob);
     } catch (error) {
       console.error(error);
     } finally {
@@ -54,7 +61,6 @@ const Login = () => {
         rollNumber,
         dateOfBirth: dob,
       });
-      setIsSignUp(false);
       toast.success("Account created! You can now log in.");
     } catch (error) {
       console.error(error);
@@ -71,188 +77,200 @@ const Login = () => {
     return null;
   }
 
-  const roleIcons = { admin: Shield, staff: Users, student: BookOpen };
+  const roleConfig = {
+    admin: { icon: Shield, color: "text-destructive", bg: "bg-destructive/10", label: "Administrator" },
+    staff: { icon: Users, color: "text-primary", bg: "bg-primary/10", label: "Staff Member" },
+    student: { icon: BookOpen, color: "text-accent", bg: "bg-accent/10", label: "Student" },
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <main className="flex-1 flex items-center justify-center px-4 pt-20 pb-12">
-        <div className="w-full max-w-md">
-          {/* Login Form */}
-          {!isSignUp ? (
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Email"
-                  className="h-11 border-border bg-background rounded-md"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+      <main className="flex-1 flex items-center justify-center px-4 pt-24 pb-12">
+        <div className="w-full max-w-lg animate-slide-up">
+          {/* Branding */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-4">
+              <GraduationCap className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-display font-bold">Staff Availability Hub</h1>
+            <p className="text-muted-foreground mt-1">Manage outpasses, meetings & staff availability</p>
+          </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="dob" className="text-sm font-medium text-foreground">
-                  Date of Birth
-                </Label>
-                <Input
-                  id="dob"
-                  type="date"
-                  className="h-11 border-border bg-background rounded-md"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  required
-                />
-              </div>
+          <Card className="shadow-card border-border/50">
+            <Tabs defaultValue="login">
+              <TabsList className="grid w-full grid-cols-2 mx-0 rounded-b-none">
+                <TabsTrigger value="login" className="gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Sign Up
+                </TabsTrigger>
+              </TabsList>
 
-              <Button
-                type="submit"
-                className="w-full h-11 bg-[hsl(174,50%,42%)] hover:bg-[hsl(174,50%,36%)] text-white font-medium rounded-md"
-                disabled={loading}
-              >
-                {loading ? "Logging in..." : "Log in"}
-              </Button>
+              {/* Login Tab */}
+              <TabsContent value="login" className="mt-0">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Welcome Back</CardTitle>
+                  <CardDescription>Sign in with your email and date of birth</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="your.email@example.com"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="login-dob">Date of Birth (Password)</Label>
+                      <Input
+                        id="login-dob"
+                        type="date"
+                        value={loginDob}
+                        onChange={(e) => setLoginDob(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
+                      {loading ? "Signing in..." : "Sign In"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </TabsContent>
 
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(true)}
-                  className="text-primary hover:underline"
-                >
-                  Don't have an account?
-                </button>
-              </div>
-            </form>
-          ) : (
-            /* Sign Up Form */
-            <form onSubmit={handleSignup} className="space-y-4">
-              {/* Role Selection */}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-foreground">I am a</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["admin", "staff", "student"] as UserRole[]).map((role) => {
-                    const Icon = roleIcons[role];
-                    return (
-                      <button
-                        key={role}
-                        type="button"
-                        onClick={() => setSelectedRole(role)}
-                        className={`p-2.5 rounded-md border transition-all flex flex-col items-center gap-1 text-xs font-medium capitalize ${
-                          selectedRole === role
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/50 text-muted-foreground"
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {role}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Signup Tab */}
+              <TabsContent value="signup" className="mt-0">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Create Account</CardTitle>
+                  <CardDescription>Select your role and fill in details</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSignup} className="space-y-4">
+                    {/* Role Selection */}
+                    <div className="space-y-2">
+                      <Label>I am a</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(["admin", "staff", "student"] as UserRole[]).map((role) => {
+                          const config = roleConfig[role];
+                          const Icon = config.icon;
+                          return (
+                            <button
+                              key={role}
+                              type="button"
+                              onClick={() => setSelectedRole(role)}
+                              className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 text-xs font-medium capitalize ${
+                                selectedRole === role
+                                  ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                  : "border-border hover:border-primary/40 text-muted-foreground"
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg ${config.bg} flex items-center justify-center`}>
+                                <Icon className={`w-4 h-4 ${config.color}`} />
+                              </div>
+                              {config.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-name" className="text-sm font-medium text-foreground">Full Name</Label>
-                <Input
-                  id="signup-name"
-                  type="text"
-                  placeholder="Full Name"
-                  className="h-11 border-border bg-background rounded-md"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Input
+                        id="signup-name"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                      />
+                    </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-email" className="text-sm font-medium text-foreground">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="Email"
-                  className="h-11 border-border bg-background rounded-md"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="your.email@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-dob" className="text-sm font-medium text-foreground">Date of Birth</Label>
-                <Input
-                  id="signup-dob"
-                  type="date"
-                  className="h-11 border-border bg-background rounded-md"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-dob">Date of Birth (used as password)</Label>
+                      <Input
+                        id="signup-dob"
+                        type="date"
+                        value={dob}
+                        onChange={(e) => setDob(e.target.value)}
+                        required
+                      />
+                    </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-phone" className="text-sm font-medium text-foreground">Phone</Label>
-                <Input
-                  id="signup-phone"
-                  type="tel"
-                  placeholder="Phone"
-                  className="h-11 border-border bg-background rounded-md"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-phone">Phone (optional)</Label>
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        placeholder="+91 9876543210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
 
-              {selectedRole === "student" && (
-                <>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-roll" className="text-sm font-medium text-foreground">Roll Number</Label>
-                    <Input
-                      id="signup-roll"
-                      type="text"
-                      placeholder="Roll Number"
-                      className="h-11 border-border bg-background rounded-md"
-                      value={rollNumber}
-                      onChange={(e) => setRollNumber(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-dept" className="text-sm font-medium text-foreground">Department</Label>
-                    <Input
-                      id="signup-dept"
-                      type="text"
-                      placeholder="Department"
-                      className="h-11 border-border bg-background rounded-md"
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
+                    {selectedRole === "student" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-roll">Roll Number</Label>
+                          <Input
+                            id="signup-roll"
+                            placeholder="CS2024001"
+                            value={rollNumber}
+                            onChange={(e) => setRollNumber(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-dept">Department</Label>
+                          <Input
+                            id="signup-dept"
+                            placeholder="Computer Science"
+                            value={department}
+                            onChange={(e) => setDepartment(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
 
-              <Button
-                type="submit"
-                className="w-full h-11 bg-[hsl(174,50%,42%)] hover:bg-[hsl(174,50%,36%)] text-white font-medium rounded-md"
-                disabled={loading}
-              >
-                {loading ? "Creating account..." : "Sign Up"}
-              </Button>
+                    {(selectedRole === "staff" || selectedRole === "admin") && (
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-dept-staff">Department</Label>
+                        <Input
+                          id="signup-dept-staff"
+                          placeholder="Computer Science"
+                          value={department}
+                          onChange={(e) => setDepartment(e.target.value)}
+                        />
+                      </div>
+                    )}
 
-              <div className="text-sm text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(false)}
-                  className="text-primary hover:underline"
-                >
-                  Already have an account? Log in
-                </button>
-              </div>
-            </form>
-          )}
+                    <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
+                      {loading ? "Creating account..." : "Create Account"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </TabsContent>
+            </Tabs>
+          </Card>
         </div>
       </main>
 
