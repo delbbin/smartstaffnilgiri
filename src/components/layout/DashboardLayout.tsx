@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import {
   GraduationCap,
   LayoutDashboard,
@@ -9,7 +10,6 @@ import {
   Calendar,
   Users,
   BarChart3,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -17,6 +17,7 @@ import {
   HelpCircle,
   Activity,
   Clock,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -100,9 +101,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
           <span className="font-display font-bold">SmartStaff</span>
         </div>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -122,9 +126,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
 
           {/* User Info */}
-          <div className="p-4 border-b border-border">
-            <p className="font-semibold text-foreground">{profile?.full_name}</p>
-            <p className="text-sm text-muted-foreground">{getRoleLabel()}</p>
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-foreground">{profile?.full_name}</p>
+              <p className="text-sm text-muted-foreground">{getRoleLabel()}</p>
+            </div>
+            <div className="hidden lg:block">
+              <NotificationBell />
+            </div>
           </div>
 
           {/* Navigation */}
@@ -152,6 +161,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
           {/* Footer Actions */}
           <div className="p-4 border-t border-border space-y-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                navigate("/change-password");
+                setSidebarOpen(false);
+              }}
+            >
+              <KeyRound className="w-4 h-4" />
+              Change Password
+            </Button>
             <Button
               variant="outline"
               className="w-full justify-start gap-2"
