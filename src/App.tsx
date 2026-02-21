@@ -12,6 +12,8 @@ import Login from "./pages/Login";
 import FAQ from "./pages/FAQ";
 import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -45,6 +47,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/feedback" element={<Feedback />} />
 
@@ -170,6 +173,16 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminAnalytics />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Change password (all roles) */}
+            <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute>
+                  <ChangePassword />
                 </ProtectedRoute>
               }
             />

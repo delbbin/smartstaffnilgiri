@@ -143,6 +143,29 @@ const Login = () => {
                     <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
                       {loading ? "Signing in..." : "Sign In"}
                     </Button>
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        className="text-sm text-primary hover:underline"
+                        onClick={async () => {
+                          if (!loginEmail) {
+                            toast.error("Please enter your email first");
+                            return;
+                          }
+                          try {
+                            const { error } = await (await import("@/integrations/supabase/client")).supabase.auth.resetPasswordForEmail(loginEmail, {
+                              redirectTo: `${window.location.origin}/reset-password`,
+                            });
+                            if (error) throw error;
+                            toast.success("Password reset link sent to your email!");
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to send reset link");
+                          }
+                        }}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
                   </form>
                 </CardContent>
               </TabsContent>
