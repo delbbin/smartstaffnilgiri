@@ -57,6 +57,10 @@ const adminNavItems: NavItem[] = [
   { label: "FAQ Management", href: "/admin/faq", icon: HelpCircle },
 ];
 
+const securityNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/security", icon: LayoutDashboard },
+];
+
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
@@ -71,6 +75,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         return staffNavItems;
       case "student":
         return studentNavItems;
+      case "security":
+        return securityNavItems;
       default:
         return [];
     }
@@ -86,6 +92,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         return "Staff Member";
       case "student":
         return "Student";
+      case "security":
+        return "Security";
       default:
         return "User";
     }

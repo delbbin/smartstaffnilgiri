@@ -28,6 +28,9 @@ import StaffMeetings from "./pages/staff/StaffMeetings";
 import StaffAttendance from "./pages/staff/StaffAttendance";
 import StaffAvailabilityManage from "./pages/staff/StaffAvailabilityManage";
 
+// Security pages
+import SecurityDashboard from "./pages/security/SecurityDashboard";
+
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -123,6 +126,16 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["staff"]}>
                   <StaffAvailabilityManage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Security routes */}
+            <Route
+              path="/security"
+              element={
+                <ProtectedRoute allowedRoles={["security"]}>
+                  <SecurityDashboard />
                 </ProtectedRoute>
               }
             />
