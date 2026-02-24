@@ -30,6 +30,8 @@ export const Navbar = () => {
         return "/admin";
       case "staff":
         return "/staff";
+      case "security":
+        return "/security";
       case "student":
         return "/student";
       default:

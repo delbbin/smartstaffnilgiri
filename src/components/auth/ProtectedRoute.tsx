@@ -33,6 +33,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         ? "/admin"
         : profile.role === "staff"
         ? "/staff"
+        : profile.role === "security"
+        ? "/security"
         : "/student";
     return <Navigate to={redirectPath} replace />;
   }
