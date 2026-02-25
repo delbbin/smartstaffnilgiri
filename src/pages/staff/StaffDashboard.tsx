@@ -148,7 +148,7 @@ const StaffDashboard = () => {
                 <p className="text-muted-foreground text-center py-6">No outpass requests</p>
               ) : (
                 <div className="space-y-3">
-                  {outpassRequests.slice(0, 5).map((request) => (
+                  {outpassRequests.slice(0, 5).map((request: any) => (
                     <div
                       key={request.id}
                       className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
@@ -159,17 +159,28 @@ const StaffDashboard = () => {
                           {new Date(request.departure_time).toLocaleDateString()}
                         </p>
                       </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                          request.status === "approved"
-                            ? "bg-success/10 text-success"
-                            : request.status === "rejected"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-warning/10 text-warning"
-                        }`}
-                      >
-                        {request.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {request.gate_status && request.gate_status !== "on_campus" && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            request.gate_status === "left"
+                              ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                              : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          }`}>
+                            {request.gate_status === "left" ? "Left" : "Returned"}
+                          </span>
+                        )}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                            request.status === "approved"
+                              ? "bg-success/10 text-success"
+                              : request.status === "rejected"
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-warning/10 text-warning"
+                          }`}
+                        >
+                          {request.status}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
