@@ -193,37 +193,46 @@ const StaffOutpass = () => {
                       : "border-destructive/50 bg-destructive/5"
                   }`}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        {getStatusIcon(request.status)}
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold">
-                              {request.student?.full_name || "Unknown Student"}
-                            </span>
-                            <span className="text-sm text-muted-foreground">•</span>
-                            <span className="text-sm">{request.destination}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{request.reason}</p>
-                          {request.hod_remarks && (
-                            <p className="text-sm mt-2 p-2 bg-muted rounded">
-                              <span className="font-medium">Remarks:</span> {request.hod_remarks}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                          request.status === "approved"
-                            ? "bg-success text-success-foreground"
-                            : "bg-destructive text-destructive-foreground"
-                        }`}
-                      >
-                        {request.status}
-                      </span>
-                    </div>
-                  </CardContent>
+                   <CardContent className="p-4">
+                     <div className="flex items-start justify-between">
+                       <div className="flex items-start gap-4">
+                         {getStatusIcon(request.status)}
+                         <div>
+                           <div className="flex items-center gap-2 mb-1">
+                             <span className="font-semibold">
+                               {request.student?.full_name || "Unknown Student"}
+                             </span>
+                             <span className="text-sm text-muted-foreground">•</span>
+                             <span className="text-sm">{request.destination}</span>
+                           </div>
+                           <p className="text-sm text-muted-foreground">{request.reason}</p>
+                           {(request as any).gate_status && (request as any).gate_status !== "on_campus" && (
+                             <p className={`text-xs mt-1 font-medium ${
+                               (request as any).gate_status === "left"
+                                 ? "text-orange-600"
+                                 : "text-green-600"
+                             }`}>
+                               Gate: {(request as any).gate_status === "left" ? "Left Campus" : "Returned"}
+                             </p>
+                           )}
+                           {request.hod_remarks && (
+                             <p className="text-sm mt-2 p-2 bg-muted rounded">
+                               <span className="font-medium">Remarks:</span> {request.hod_remarks}
+                             </p>
+                           )}
+                         </div>
+                       </div>
+                       <span
+                         className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                           request.status === "approved"
+                             ? "bg-success text-success-foreground"
+                             : "bg-destructive text-destructive-foreground"
+                         }`}
+                       >
+                         {request.status}
+                       </span>
+                     </div>
+                   </CardContent>
                 </Card>
               ))}
             </div>

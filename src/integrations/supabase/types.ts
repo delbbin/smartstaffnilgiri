@@ -175,9 +175,13 @@ export type Database = {
           created_at: string
           departure_time: string
           destination: string
+          gate_status: string
+          gate_verified_at: string | null
+          gate_verified_by: string | null
           hod_remarks: string | null
           id: string
           reason: string
+          requested_by_security: boolean
           return_time: string
           status: Database["public"]["Enums"]["outpass_status"]
           student_id: string
@@ -188,9 +192,13 @@ export type Database = {
           created_at?: string
           departure_time: string
           destination: string
+          gate_status?: string
+          gate_verified_at?: string | null
+          gate_verified_by?: string | null
           hod_remarks?: string | null
           id?: string
           reason: string
+          requested_by_security?: boolean
           return_time: string
           status?: Database["public"]["Enums"]["outpass_status"]
           student_id: string
@@ -201,9 +209,13 @@ export type Database = {
           created_at?: string
           departure_time?: string
           destination?: string
+          gate_status?: string
+          gate_verified_at?: string | null
+          gate_verified_by?: string | null
           hod_remarks?: string | null
           id?: string
           reason?: string
+          requested_by_security?: boolean
           return_time?: string
           status?: Database["public"]["Enums"]["outpass_status"]
           student_id?: string

@@ -27,9 +27,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Shield, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { Search, Shield, CheckCircle, XCircle, Clock, Eye, ScanLine, AlertTriangle, LogOut, LogIn } from "lucide-react";
 import { format } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
+import { VerifyOutpassDialog } from "@/components/security/VerifyOutpassDialog";
+import { EmergencyRequestDialog } from "@/components/security/EmergencyRequestDialog";
 
 interface OutpassWithStudent {
   id: string;
@@ -39,8 +41,11 @@ interface OutpassWithStudent {
   departure_time: string;
   return_time: string;
   status: "pending" | "approved" | "rejected";
+  gate_status: string;
+  gate_verified_at: string | null;
   hod_remarks?: string;
   approved_by?: string;
+  requested_by_security: boolean;
   created_at: string;
   updated_at: string;
   student?: {
@@ -61,6 +66,8 @@ const SecurityDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOutpass, setSelectedOutpass] = useState<OutpassWithStudent | null>(null);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -87,6 +94,24 @@ const SecurityDashboard: React.FC = () => {
     if (profile) fetchRequests();
   }, [profile]);
 
+  // Real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel("outpass-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "outpass_requests" },
+        () => {
+          fetchRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const filtered = requests.filter((r) => {
     const matchesStatus = statusFilter === "all" || r.status === statusFilter;
     const q = searchQuery.toLowerCase();
@@ -109,26 +134,50 @@ const SecurityDashboard: React.FC = () => {
     }
   };
 
+  const getGateStatusBadge = (status: string) => {
+    switch (status) {
+      case "left":
+        return <Badge className="bg-orange-600 text-white"><LogOut className="w-3 h-3 mr-1" />Left</Badge>;
+      case "returned":
+        return <Badge className="bg-green-600 text-white"><LogIn className="w-3 h-3 mr-1" />Returned</Badge>;
+      default:
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />On Campus</Badge>;
+    }
+  };
+
   const approvedCount = requests.filter((r) => r.status === "approved").length;
   const rejectedCount = requests.filter((r) => r.status === "rejected").length;
   const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const leftCampusCount = requests.filter((r) => r.gate_status === "left").length;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="w-8 h-8 text-primary" />
-            Security Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            View and verify outpass requests for campus gate management
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Shield className="w-8 h-8 text-primary" />
+              Security Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Verify outpasses, track gate status, and manage emergency requests
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setVerifyOpen(true)} className="gap-2">
+              <ScanLine className="w-4 h-4" />
+              Verify Outpass
+            </Button>
+            <Button onClick={() => setEmergencyOpen(true)} variant="outline" className="gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Emergency Request
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/30">
@@ -159,6 +208,17 @@ const SecurityDashboard: React.FC = () => {
               <div>
                 <p className="text-2xl font-bold">{pendingCount}</p>
                 <p className="text-sm text-muted-foreground">Pending</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6 flex items-center gap-4">
+              <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                <LogOut className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{leftCampusCount}</p>
+                <p className="text-sm text-muted-foreground">Left Campus</p>
               </div>
             </CardContent>
           </Card>
@@ -213,8 +273,8 @@ const SecurityDashboard: React.FC = () => {
                       <TableHead>ID Number</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Date & Time</TableHead>
-                      <TableHead>Reason</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Gate Status</TableHead>
                       <TableHead>Authority</TableHead>
                       <TableHead>Action</TableHead>
                     </TableRow>
@@ -222,14 +282,19 @@ const SecurityDashboard: React.FC = () => {
                   <TableBody>
                     {filtered.map((r) => (
                       <TableRow key={r.id}>
-                        <TableCell className="font-medium">{r.student?.full_name || "—"}</TableCell>
+                        <TableCell className="font-medium">
+                          {r.student?.full_name || "—"}
+                          {r.requested_by_security && (
+                            <Badge variant="outline" className="ml-2 text-xs">Emergency</Badge>
+                          )}
+                        </TableCell>
                         <TableCell>{r.student?.roll_number || "—"}</TableCell>
                         <TableCell>{r.student?.department || "—"}</TableCell>
                         <TableCell className="text-sm">
                           {format(new Date(r.created_at), "MMM dd, yyyy HH:mm")}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">{r.reason}</TableCell>
                         <TableCell>{getStatusBadge(r.status)}</TableCell>
+                        <TableCell>{getGateStatusBadge(r.gate_status)}</TableCell>
                         <TableCell>{r.approver?.name || "—"}</TableCell>
                         <TableCell>
                           <Button
@@ -283,6 +348,10 @@ const SecurityDashboard: React.FC = () => {
                   {getStatusBadge(selectedOutpass.status)}
                 </div>
                 <div>
+                  <p className="text-muted-foreground">Gate Status</p>
+                  {getGateStatusBadge(selectedOutpass.gate_status)}
+                </div>
+                <div>
                   <p className="text-muted-foreground">Destination</p>
                   <p className="font-medium">{selectedOutpass.destination}</p>
                 </div>
@@ -303,24 +372,18 @@ const SecurityDashboard: React.FC = () => {
                   </p>
                 </div>
                 {selectedOutpass.status === "approved" && (
-                  <>
-                    <div>
-                      <p className="text-muted-foreground">Approved By</p>
-                      <p className="font-medium">{selectedOutpass.approver?.name || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Approval Time</p>
-                      <p className="font-medium">
-                        {format(new Date(selectedOutpass.updated_at), "MMM dd, yyyy HH:mm")}
-                      </p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-muted-foreground">Valid Until</p>
-                      <p className="font-medium">
-                        {format(new Date(selectedOutpass.return_time), "MMM dd, yyyy HH:mm")}
-                      </p>
-                    </div>
-                  </>
+                  <div>
+                    <p className="text-muted-foreground">Approved By</p>
+                    <p className="font-medium">{selectedOutpass.approver?.name || "—"}</p>
+                  </div>
+                )}
+                {selectedOutpass.gate_verified_at && (
+                  <div>
+                    <p className="text-muted-foreground">Gate Verified At</p>
+                    <p className="font-medium">
+                      {format(new Date(selectedOutpass.gate_verified_at), "MMM dd, yyyy HH:mm")}
+                    </p>
+                  </div>
                 )}
                 {selectedOutpass.hod_remarks && (
                   <div className="col-span-2">
@@ -328,11 +391,32 @@ const SecurityDashboard: React.FC = () => {
                     <p className="font-medium">{selectedOutpass.hod_remarks}</p>
                   </div>
                 )}
+                {selectedOutpass.requested_by_security && (
+                  <div className="col-span-2">
+                    <Badge variant="outline" className="text-orange-600 border-orange-600">
+                      <AlertTriangle className="w-3 h-3 mr-1" /> Emergency Request by Security
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Verify Dialog */}
+      <VerifyOutpassDialog
+        open={verifyOpen}
+        onOpenChange={setVerifyOpen}
+        onVerified={fetchRequests}
+      />
+
+      {/* Emergency Request Dialog */}
+      <EmergencyRequestDialog
+        open={emergencyOpen}
+        onOpenChange={setEmergencyOpen}
+        onCreated={fetchRequests}
+      />
     </DashboardLayout>
   );
 };
