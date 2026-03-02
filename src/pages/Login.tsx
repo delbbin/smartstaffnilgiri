@@ -27,22 +27,24 @@ const Login = () => {
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginDob, setLoginDob] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Signup form state
   const [email, setEmail] = useState("");
-  const [dob, setDob] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
   const [rollNumber, setRollNumber] = useState("");
+  const [dob, setDob] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginDob) { toast.error("Please enter your date of birth"); return; }
+    if (!loginPassword) { toast.error("Please enter your password"); return; }
     setLoading(true);
     try {
-      await signIn(loginEmail, loginDob);
+      await signIn(loginEmail, loginPassword);
     } catch (error) {
       console.error(error);
     } finally {
@@ -52,10 +54,17 @@ const Login = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dob) { toast.error("Please enter your date of birth"); return; }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
     setLoading(true);
     try {
-      await signUp(email, dob, fullName, selectedRole, {
+      await signUp(email, password, fullName, selectedRole, {
         phone,
         department,
         rollNumber,
@@ -115,7 +124,7 @@ const Login = () => {
               <TabsContent value="login" className="mt-0">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-xl">Welcome Back</CardTitle>
-                  <CardDescription>Sign in with your email and date of birth</CardDescription>
+                  <CardDescription>Sign in with your email and password</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleLogin} className="space-y-4">
@@ -131,13 +140,15 @@ const Login = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-dob">Date of Birth (Password)</Label>
+                      <Label htmlFor="login-password">Password</Label>
                       <Input
-                        id="login-dob"
-                        type="date"
-                        value={loginDob}
-                        onChange={(e) => setLoginDob(e.target.value)}
+                        id="login-password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
                         required
+                        minLength={8}
                       />
                     </div>
                     <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
@@ -230,13 +241,38 @@ const Login = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signup-dob">Date of Birth (used as password)</Label>
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="Min. 8 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={8}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <Input
+                        id="signup-confirm-password"
+                        type="password"
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={8}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-dob">Date of Birth (optional)</Label>
                       <Input
                         id="signup-dob"
                         type="date"
                         value={dob}
                         onChange={(e) => setDob(e.target.value)}
-                        required
                       />
                     </div>
 

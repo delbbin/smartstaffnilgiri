@@ -9,8 +9,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, dateOfBirth: string, fullName: string, role: UserRole, additionalData?: Record<string, string>) => Promise<void>;
-  signIn: (email: string, dateOfBirth: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, role: UserRole, additionalData?: Record<string, string>) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -89,16 +89,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (
     email: string,
-    dateOfBirth: string,
+    password: string,
     fullName: string,
     role: UserRole,
     additionalData?: Record<string, string>
   ) => {
     setLoading(true);
     try {
-      // Use DOB as the password
-      const password = dateOfBirth;
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -118,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           department: additionalData?.department,
           roll_number: additionalData?.rollNumber,
           phone: additionalData?.phone,
-          date_of_birth: additionalData?.dateOfBirth || dateOfBirth,
+          date_of_birth: additionalData?.dateOfBirth,
         });
 
         if (profileError) throw profileError;
@@ -133,13 +130,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, dateOfBirth: string) => {
+  const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Use DOB as the password
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password: dateOfBirth,
+        password,
       });
 
       if (error) throw error;
