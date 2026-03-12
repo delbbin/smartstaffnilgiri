@@ -36,6 +36,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminOrganization from "./pages/admin/AdminOrganization";
 
 const queryClient = new QueryClient();
 
