@@ -1,10 +1,11 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/hooks/useOrganization";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import {
-  GraduationCap,
+  Building2,
   LayoutDashboard,
   FileText,
   Calendar,
@@ -18,6 +19,7 @@ import {
   Activity,
   Clock,
   KeyRound,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -54,7 +56,7 @@ const adminNavItems: NavItem[] = [
   { label: "Meetings Overview", href: "/admin/meetings", icon: Calendar },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Feedback", href: "/admin/feedback", icon: MessageSquare },
-  { label: "FAQ Management", href: "/admin/faq", icon: HelpCircle },
+  { label: "Organization", href: "/admin/organization", icon: Settings },
 ];
 
 const securityNavItems: NavItem[] = [
@@ -63,6 +65,7 @@ const securityNavItems: NavItem[] = [
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { profile, signOut } = useAuth();
+  const { organization } = useOrganization();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -86,16 +89,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const getRoleLabel = () => {
     switch (profile?.role) {
-      case "admin":
-        return "Administrator";
-      case "staff":
-        return "Staff Member";
-      case "student":
-        return "Student";
-      case "security":
-        return "Security";
-      default:
-        return "User";
+      case "admin": return "Administrator";
+      case "staff": return "Staff Member";
+      case "student": return "Student";
+      case "security": return "Security";
+      default: return "User";
     }
   };
 
@@ -105,9 +103,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-primary-foreground" />
+            <Building2 className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold">SmartStaff</span>
+          <span className="font-display font-bold">StaffHub</span>
         </div>
         <div className="flex items-center gap-1">
           <NotificationBell />
@@ -125,18 +123,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
+          {/* Logo + Org */}
           <div className="h-16 flex items-center gap-2 px-4 border-b border-border">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
+              <Building2 className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-xl">SmartStaff</span>
+            <div className="min-w-0">
+              <span className="font-display font-bold text-lg block truncate">StaffHub</span>
+              {organization && (
+                <span className="text-xs text-muted-foreground block truncate">{organization.name}</span>
+              )}
+            </div>
           </div>
 
           {/* User Info */}
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-foreground">{profile?.full_name}</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-foreground truncate">{profile?.full_name}</p>
               <p className="text-sm text-muted-foreground">{getRoleLabel()}</p>
             </div>
             <div className="hidden lg:block">
@@ -145,7 +148,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;
               return (
@@ -172,10 +175,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <Button
               variant="outline"
               className="w-full justify-start gap-2"
-              onClick={() => {
-                navigate("/change-password");
-                setSidebarOpen(false);
-              }}
+              onClick={() => { navigate("/change-password"); setSidebarOpen(false); }}
             >
               <KeyRound className="w-4 h-4" />
               Change Password
@@ -183,12 +183,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <Button
               variant="outline"
               className="w-full justify-start gap-2"
-              onClick={() => {
-                navigate("/");
-                setSidebarOpen(false);
-              }}
+              onClick={() => { navigate("/"); setSidebarOpen(false); }}
             >
-              <GraduationCap className="w-4 h-4" />
+              <Building2 className="w-4 h-4" />
               Back to Home
             </Button>
             <Button
