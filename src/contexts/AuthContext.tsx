@@ -107,6 +107,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (data.user) {
+        // Create organization if orgName provided
+        let organizationId: string | undefined;
+        if (additionalData?.orgName) {
+          const slug = additionalData.orgName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "")
+            + "-" + Date.now().toString(36);
+
+          const { data: orgData, error: orgError } = await supabase
+            .from("organizations")
+            .insert({
+              name: additionalData.orgName,
+              slug,
+              created_by: data.user.id,
+            })
+            .select("id")
+            .single();
+
+          if (orgError) {
+            console.error("Error creating organization:", orgError);
+          } else {
+            organizationId = orgData.id;
+
+            // Add creator as org admin member
+            await supabase.from("organization_members").insert({
+              organization_id: organizationId,
+              user_id: data.user.id,
+              role: "admin",
+            });
+          }
+        }
+
         const { error: profileError } = await supabase.from("profiles").insert({
           user_id: data.user.id,
           email,
@@ -116,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           roll_number: additionalData?.rollNumber,
           phone: additionalData?.phone,
           date_of_birth: additionalData?.dateOfBirth,
+          organization_id: organizationId,
         });
 
         if (profileError) throw profileError;
