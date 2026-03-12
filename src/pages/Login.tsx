@@ -12,12 +12,13 @@ import {
   Shield,
   Users,
   BookOpen,
-  GraduationCap,
+  Building2,
   LogIn,
   UserPlus,
 } from "lucide-react";
 import { UserRole } from "@/lib/supabase";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const Login = () => {
   const [department, setDepartment] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   const [dob, setDob] = useState("");
+  const [orgName, setOrgName] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +71,7 @@ const Login = () => {
         department,
         rollNumber,
         dateOfBirth: dob,
+        orgName,
       });
       toast.success("Account created! You can now log in.");
     } catch (error) {
@@ -81,7 +84,8 @@ const Login = () => {
   if (profile) {
     const redirectPath =
       profile.role === "admin" ? "/admin" :
-      profile.role === "staff" ? "/staff" : "/student";
+      profile.role === "staff" ? "/staff" :
+      profile.role === "security" ? "/security" : "/student";
     navigate(redirectPath);
     return null;
   }
@@ -101,10 +105,10 @@ const Login = () => {
           {/* Branding */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-4">
-              <GraduationCap className="w-8 h-8 text-primary-foreground" />
+              <Building2 className="w-8 h-8 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-display font-bold">Staff Availability Hub</h1>
-            <p className="text-muted-foreground mt-1">Manage outpasses, meetings & staff availability</p>
+            <h1 className="text-3xl font-display font-bold">StaffHub</h1>
+            <p className="text-muted-foreground mt-1">Create or join your organization workspace</p>
           </div>
 
           <Card className="shadow-card border-border/50">
@@ -130,26 +134,11 @@ const Login = () => {
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                      />
+                      <Input id="login-email" type="email" placeholder="your.email@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="login-password">Password</Label>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
+                      <Input id="login-password" type="password" placeholder="Enter your password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required minLength={8} />
                     </div>
                     <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
                       {loading ? "Signing in..." : "Sign In"}
@@ -159,12 +148,9 @@ const Login = () => {
                         type="button"
                         className="text-sm text-primary hover:underline"
                         onClick={async () => {
-                          if (!loginEmail) {
-                            toast.error("Please enter your email first");
-                            return;
-                          }
+                          if (!loginEmail) { toast.error("Please enter your email first"); return; }
                           try {
-                            const { error } = await (await import("@/integrations/supabase/client")).supabase.auth.resetPasswordForEmail(loginEmail, {
+                            const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
                               redirectTo: `${window.location.origin}/reset-password`,
                             });
                             if (error) throw error;
@@ -185,16 +171,29 @@ const Login = () => {
               <TabsContent value="signup" className="mt-0">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-xl">Create Account</CardTitle>
-                  <CardDescription>Select your role and fill in details</CardDescription>
+                  <CardDescription>Set up your organization workspace</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignup} className="space-y-4">
+                    {/* Organization Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-org">Organization Name</Label>
+                      <Input
+                        id="signup-org"
+                        placeholder="e.g. Nilgiri College, Acme Corp"
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                        required
+                      />
+                    </div>
+
                     {/* Role Selection */}
                     <div className="space-y-2">
                       <Label>I am a</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {(["admin", "staff", "student"] as UserRole[]).map((role) => {
-                          const config = roleConfig[role];
+                          const config = roleConfig[role as keyof typeof roleConfig];
+                          if (!config) return null;
                           const Icon = config.icon;
                           return (
                             <button
@@ -219,93 +218,38 @@ const Login = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
+                      <Input id="signup-name" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
+                      <Input id="signup-email" type="email" placeholder="your.email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Min. 8 characters"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
+                      <Input id="signup-password" type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                      <Input
-                        id="signup-confirm-password"
-                        type="password"
-                        placeholder="Confirm your password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-dob">Date of Birth (optional)</Label>
-                      <Input
-                        id="signup-dob"
-                        type="date"
-                        value={dob}
-                        onChange={(e) => setDob(e.target.value)}
-                      />
+                      <Input id="signup-confirm-password" type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-phone">Phone (optional)</Label>
-                      <Input
-                        id="signup-phone"
-                        type="tel"
-                        placeholder="+91 9876543210"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
+                      <Input id="signup-phone" type="tel" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} />
                     </div>
 
                     {selectedRole === "student" && (
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                           <Label htmlFor="signup-roll">Roll Number</Label>
-                          <Input
-                            id="signup-roll"
-                            placeholder="CS2024001"
-                            value={rollNumber}
-                            onChange={(e) => setRollNumber(e.target.value)}
-                          />
+                          <Input id="signup-roll" placeholder="CS2024001" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="signup-dept">Department</Label>
-                          <Input
-                            id="signup-dept"
-                            placeholder="Computer Science"
-                            value={department}
-                            onChange={(e) => setDepartment(e.target.value)}
-                          />
+                          <Input id="signup-dept" placeholder="Computer Science" value={department} onChange={(e) => setDepartment(e.target.value)} />
                         </div>
                       </div>
                     )}
@@ -313,17 +257,12 @@ const Login = () => {
                     {(selectedRole === "staff" || selectedRole === "admin") && (
                       <div className="space-y-2">
                         <Label htmlFor="signup-dept-staff">Department</Label>
-                        <Input
-                          id="signup-dept-staff"
-                          placeholder="Computer Science"
-                          value={department}
-                          onChange={(e) => setDepartment(e.target.value)}
-                        />
+                        <Input id="signup-dept-staff" placeholder="Computer Science" value={department} onChange={(e) => setDepartment(e.target.value)} />
                       </div>
                     )}
 
                     <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
-                      {loading ? "Creating account..." : "Create Account"}
+                      {loading ? "Creating workspace..." : "Create Workspace & Account"}
                     </Button>
                   </form>
                 </CardContent>
