@@ -190,6 +190,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/organization"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminOrganization />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Change password (all roles) */}
             <Route
