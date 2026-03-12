@@ -2,6 +2,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type UserRole = "admin" | "staff" | "student" | "security";
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+  industry: string;
+  is_active: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Profile {
   id: string;
   user_id: string;
@@ -11,6 +24,7 @@ export interface Profile {
   department?: string;
   roll_number?: string;
   phone?: string;
+  organization_id?: string;
   created_at: string;
   updated_at: string;
 }
