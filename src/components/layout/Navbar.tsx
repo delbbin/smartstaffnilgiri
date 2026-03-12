@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
-  GraduationCap, 
+  Building2, 
   Menu, 
   X, 
   LogOut, 
@@ -45,10 +45,10 @@ export const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
+              <Building2 className="w-6 h-6 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-xl text-foreground">
-              SmartStaff
+              StaffHub
             </span>
           </Link>
 
@@ -110,45 +110,17 @@ export const Navbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <div className="flex flex-col gap-4">
-              <Link 
-                to="/" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link 
-                to="/faq" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                FAQ
-              </Link>
-              <Link 
-                to="/feedback" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Feedback
-              </Link>
+              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>FAQ</Link>
+              <Link to="/feedback" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Feedback</Link>
               {user && profile ? (
                 <>
-                  <Link 
-                    to={getDashboardLink()} 
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Button variant="outline" onClick={signOut}>
-                    Sign Out
-                  </Button>
+                  <Link to={getDashboardLink()} className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                  <Button variant="outline" onClick={signOut}>Sign Out</Button>
                 </>
               ) : (
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="gradient-primary text-primary-foreground w-full">
-                    Login
-                  </Button>
+                  <Button className="gradient-primary text-primary-foreground w-full">Login</Button>
                 </Link>
               )}
             </div>

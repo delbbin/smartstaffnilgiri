@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import {
-  GraduationCap,
+  Building2,
   FileText,
   Calendar,
   BarChart3,
@@ -12,54 +12,66 @@ import {
   Clock,
   CheckCircle,
   ArrowRight,
+  Layers,
+  Sparkles,
+  Globe,
 } from "lucide-react";
 
 const features = [
   {
-    icon: FileText,
-    title: "Digital Outpass",
+    icon: Building2,
+    title: "Multi-Tenant Workspaces",
     description:
-      "Request and track outpass approvals online. No more paper forms or waiting in queues.",
+      "Each organization gets an isolated workspace with its own data, roles, and departments.",
+  },
+  {
+    icon: FileText,
+    title: "Digital Outpass System",
+    description:
+      "Request and track outpass approvals digitally with QR verification at security gates.",
   },
   {
     icon: Calendar,
     title: "Meeting Scheduler",
     description:
-      "Book appointments with tutors for notebook signing, no-due certificates, and consultations.",
+      "Book appointments with staff, view availability in real-time, and manage schedules.",
   },
   {
     icon: BarChart3,
-    title: "Availability Analytics",
+    title: "Analytics Dashboard",
     description:
-      "View real-time staff availability graphs to find the best time for your meetings.",
+      "Comprehensive analytics for attendance, outpass frequency, and staff availability trends.",
   },
   {
     icon: Shield,
-    title: "HOD Approval",
+    title: "Role-Based Access",
     description:
-      "Secure digital approval system with Dr. Archana Mam's authorization for outpasses.",
+      "Fine-grained access control with Admin, Staff, Student, and Security roles per organization.",
   },
   {
-    icon: Users,
-    title: "Staff Directory",
+    icon: Sparkles,
+    title: "AI Organization Builder",
     description:
-      "Access complete information about all department tutors and their availability schedules.",
-  },
-  {
-    icon: Clock,
-    title: "Real-time Tracking",
-    description:
-      "Track your requests in real-time and get instant notifications on status updates.",
+      "Describe your org structure in plain English and let AI generate departments, roles, and dashboards.",
   },
 ];
 
-const staffMembers = [
-  { name: "Dr. Archana", role: "Head of Department", isHod: true },
-  { name: "Miss Pavithra", role: "Assistant Professor", isHod: false },
-  { name: "Miss Jima", role: "Assistant Professor", isHod: false },
-  { name: "Miss Anusree", role: "Assistant Professor", isHod: false },
-  { name: "Dr. Renjith", role: "Associate Professor", isHod: false },
-  { name: "Miss SreeDhanya", role: "Assistant Professor", isHod: false },
+const useCases = [
+  {
+    icon: Globe,
+    title: "Educational Institutions",
+    description: "Manage staff availability, student outpasses, and campus security.",
+  },
+  {
+    icon: Layers,
+    title: "Corporate Offices",
+    description: "Track employee presence, meeting rooms, and visitor management.",
+  },
+  {
+    icon: Users,
+    title: "Healthcare Facilities",
+    description: "Coordinate staff shifts, department schedules, and access control.",
+  },
 ];
 
 const Index = () => {
@@ -72,24 +84,24 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="max-w-4xl mx-auto text-center animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
-              <GraduationCap className="w-4 h-4" />
-              <span className="text-sm font-medium">Department of Computer Science</span>
+              <Building2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Multi-Tenant SaaS Platform</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 leading-tight">
-              Smart Staff{" "}
+              Your Organization,{" "}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                Availability
+                Fully Managed
               </span>{" "}
-              & Outpass System
+              with StaffHub
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Streamline your campus experience with digital outpass requests, meeting
-              scheduling, and real-time staff availability tracking.
+              Create your workspace, define roles & departments, and manage staff availability,
+              outpasses, meetings, and security — all from one platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/login">
                 <Button size="lg" className="gradient-primary text-primary-foreground px-8 gap-2">
-                  Get Started
+                  Create Your Workspace
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -108,11 +120,10 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Everything You Need
+              Everything Your Organization Needs
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              A comprehensive solution for managing staff-student interactions and campus
-              movement.
+              A comprehensive SaaS platform for managing people, processes, and access control.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -133,37 +144,28 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Staff Section */}
+      {/* Use Cases Section */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Our Faculty
+              Built for Any Organization
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Meet the dedicated team of Computer Science department.
+              StaffHub adapts to your industry with AI-powered organization setup.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {staffMembers.map((staff, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {useCases.map((useCase, index) => (
               <div
                 key={index}
-                className={`relative bg-card rounded-2xl p-6 shadow-card text-center ${
-                  staff.isHod ? "ring-2 ring-primary" : ""
-                }`}
+                className="bg-card rounded-2xl p-6 shadow-card text-center"
               >
-                {staff.isHod && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                    HOD
-                  </div>
-                )}
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary-foreground">
-                    {staff.name.charAt(0)}
-                  </span>
+                  <useCase.icon className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <h3 className="font-semibold text-lg">{staff.name}</h3>
-                <p className="text-sm text-muted-foreground">{staff.role}</p>
+                <h3 className="font-semibold text-lg">{useCase.title}</h3>
+                <p className="text-sm text-muted-foreground mt-2">{useCase.description}</p>
               </div>
             ))}
           </div>
@@ -179,25 +181,25 @@ const Index = () => {
                 Ready to Get Started?
               </h2>
               <p className="text-primary-foreground/80 mb-6">
-                Join our digital campus management system today. Request outpasses, schedule
-                meetings, and stay connected with your tutors.
+                Create your organization workspace in minutes. Set up departments, invite your
+                team, and start managing everything from one dashboard.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/login">
                   <Button
                     size="lg"
                     variant="secondary"
-                    className="bg-white text-primary hover:bg-white/90 gap-2"
+                    className="bg-background text-primary hover:bg-background/90 gap-2"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    Login Now
+                    Start Free
                   </Button>
                 </Link>
                 <Link to="/faq">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-white/30 text-primary-foreground hover:bg-white/10"
+                    className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
                   >
                     View FAQ
                   </Button>
@@ -205,7 +207,7 @@ const Index = () => {
               </div>
             </div>
             <div className="absolute right-0 bottom-0 opacity-10">
-              <GraduationCap className="w-64 h-64" />
+              <Building2 className="w-64 h-64" />
             </div>
           </div>
         </div>
