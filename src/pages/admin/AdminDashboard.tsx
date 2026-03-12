@@ -76,7 +76,7 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-2xl font-display font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Overview of the SmartStaff system
+            Overview of your StaffHub workspace
           </p>
         </div>
 
