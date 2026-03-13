@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  isHod: boolean;
   signUp: (email: string, password: string, fullName: string, role: UserRole, additionalData?: Record<string, string>) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -30,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isHod, setIsHod] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -50,10 +52,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const fetchIsHod = async (profileId: string) => {
+    try {
+      const { data } = await supabase
+        .from("staff_members")
+        .select("is_hod")
+        .eq("profile_id", profileId)
+        .single();
+      return data?.is_hod === true;
+    } catch {
+      return false;
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       const profileData = await fetchProfile(user.id);
       setProfile(profileData);
+      if (profileData?.role === "staff") {
+        const hodStatus = await fetchIsHod(profileData.id);
+        setIsHod(hodStatus);
+      } else {
+        setIsHod(false);
+      }
     }
   };
 
@@ -65,8 +86,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
+        if (profileData?.role === "staff") {
+          const hodStatus = await fetchIsHod(profileData.id);
+          setIsHod(hodStatus);
+        } else {
+          setIsHod(false);
+        }
       } else {
         setProfile(null);
+        setIsHod(false);
       }
 
       setLoading(false);
@@ -79,6 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
+        if (profileData?.role === "staff") {
+          const hodStatus = await fetchIsHod(profileData.id);
+          setIsHod(hodStatus);
+        }
       }
 
       setLoading(false);
@@ -107,39 +139,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (data.user) {
-        // Create organization if orgName provided
-        let organizationId: string | undefined;
-        if (additionalData?.orgName) {
-          const slug = additionalData.orgName
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "")
-            + "-" + Date.now().toString(36);
-
-          const { data: orgData, error: orgError } = await supabase
-            .from("organizations")
-            .insert({
-              name: additionalData.orgName,
-              slug,
-              created_by: data.user.id,
-            })
-            .select("id")
-            .single();
-
-          if (orgError) {
-            console.error("Error creating organization:", orgError);
-          } else {
-            organizationId = orgData.id;
-
-            // Add creator as org admin member
-            await supabase.from("organization_members").insert({
-              organization_id: organizationId,
-              user_id: data.user.id,
-              role: "admin",
-            });
-          }
-        }
-
         const { error: profileError } = await supabase.from("profiles").insert({
           user_id: data.user.id,
           email,
@@ -148,11 +147,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           department: additionalData?.department,
           roll_number: additionalData?.rollNumber,
           phone: additionalData?.phone,
-          date_of_birth: additionalData?.dateOfBirth,
-          organization_id: organizationId,
         });
 
         if (profileError) throw profileError;
+
+        // If staff role, create staff_members entry
+        if (role === "staff") {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (profileData) {
+            await supabase.from("staff_members").insert({
+              name: fullName,
+              title: additionalData?.isHod === "true" ? "Head of Department" : "Staff",
+              email,
+              department: additionalData?.department,
+              is_hod: additionalData?.isHod === "true",
+              profile_id: profileData.id,
+            });
+          }
+        }
 
         toast.success("Account created! You can now sign in.");
       }
@@ -190,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      setIsHod(false);
       toast.success("Signed out successfully");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign out");
@@ -203,6 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         loading,
+        isHod,
         signUp,
         signIn,
         signOut,

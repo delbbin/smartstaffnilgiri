@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase, OutpassRequest, Profile } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,11 +28,17 @@ interface OutpassWithStudent extends OutpassRequest {
 }
 
 const StaffOutpass = () => {
+  const { profile, isHod } = useAuth();
   const [requests, setRequests] = useState<OutpassWithStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<OutpassWithStudent | null>(null);
   const [remarks, setRemarks] = useState("");
   const [processing, setProcessing] = useState(false);
+
+  // Only HOD and admin can access this page
+  if (profile?.role === "staff" && !isHod) {
+    return <Navigate to="/staff" replace />;
+  }
 
   const fetchRequests = async () => {
     const { data, error } = await supabase
@@ -95,7 +103,7 @@ const StaffOutpass = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Outpass Requests</h1>
+          <h1 className="text-2xl font-display font-bold">Outpass Requests (HOD)</h1>
           <p className="text-muted-foreground">
             Review and approve/reject student outpass requests
           </p>
@@ -206,15 +214,6 @@ const StaffOutpass = () => {
                              <span className="text-sm">{request.destination}</span>
                            </div>
                            <p className="text-sm text-muted-foreground">{request.reason}</p>
-                           {(request as any).gate_status && (request as any).gate_status !== "on_campus" && (
-                             <p className={`text-xs mt-1 font-medium ${
-                               (request as any).gate_status === "left"
-                                 ? "text-orange-600"
-                                 : "text-green-600"
-                             }`}>
-                               Gate: {(request as any).gate_status === "left" ? "Left Campus" : "Returned"}
-                             </p>
-                           )}
                            {request.hod_remarks && (
                              <p className="text-sm mt-2 p-2 bg-muted rounded">
                                <span className="font-medium">Remarks:</span> {request.hod_remarks}

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const StaffDashboard = () => {
-  const { profile } = useAuth();
+  const { profile, isHod } = useAuth();
   const [outpassRequests, setOutpassRequests] = useState<OutpassRequest[]>([]);
   const [meetingRequests, setMeetingRequests] = useState<MeetingRequest[]>([]);
   const [staffInfo, setStaffInfo] = useState<StaffMember | null>(null);
@@ -26,7 +26,6 @@ const StaffDashboard = () => {
     const fetchData = async () => {
       if (!profile) return;
 
-      // Get staff member info
       const { data: staffData } = await supabase
         .from("staff_members")
         .select("*")
@@ -36,7 +35,6 @@ const StaffDashboard = () => {
       if (staffData) {
         setStaffInfo(staffData as StaffMember);
 
-        // Fetch meeting requests for this staff
         const { data: meetings } = await supabase
           .from("meeting_requests")
           .select("*")
@@ -47,19 +45,22 @@ const StaffDashboard = () => {
         if (meetings) setMeetingRequests(meetings as MeetingRequest[]);
       }
 
-      // All staff can see outpass requests (HOD approves)
-      const { data: outpasses } = await supabase
-        .from("outpass_requests")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
+      // Only HOD can see outpass requests
+      if (isHod) {
+        const { data: outpasses } = await supabase
+          .from("outpass_requests")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(10);
 
-      if (outpasses) setOutpassRequests(outpasses as OutpassRequest[]);
+        if (outpasses) setOutpassRequests(outpasses as OutpassRequest[]);
+      }
+
       setLoading(false);
     };
 
     fetchData();
-  }, [profile]);
+  }, [profile, isHod]);
 
   const pendingOutpasses = outpassRequests.filter((r) => r.status === "pending").length;
   const pendingMeetings = meetingRequests.filter((r) => r.status === "pending").length;
@@ -72,23 +73,25 @@ const StaffDashboard = () => {
             Welcome, {profile?.full_name}
           </h1>
           <p className="text-muted-foreground">
-            Manage outpass approvals and meeting requests
+            {isHod ? "Manage outpass approvals and meeting requests" : "Manage meeting requests and availability"}
           </p>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingOutpasses}</p>
-                <p className="text-sm text-muted-foreground">Pending Outpasses</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isHod ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4`}>
+          {isHod && (
+            <Card>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{pendingOutpasses}</p>
+                  <p className="text-sm text-muted-foreground">Pending Outpasses</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -100,19 +103,21 @@ const StaffDashboard = () => {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {outpassRequests.filter((r) => r.status === "approved").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Approved Today</p>
-              </div>
-            </CardContent>
-          </Card>
+          {isHod && (
+            <Card>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {outpassRequests.filter((r) => r.status === "approved").length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Approved Today</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
@@ -127,48 +132,39 @@ const StaffDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Recent Outpass Requests</CardTitle>
-                <Link to="/staff/outpass">
-                  <Button variant="ghost" size="sm">View All</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-                  ))}
+        <div className={`grid grid-cols-1 ${isHod ? 'md:grid-cols-2' : ''} gap-6`}>
+          {isHod && (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Recent Outpass Requests</CardTitle>
+                  <Link to="/staff/outpass">
+                    <Button variant="ghost" size="sm">View All</Button>
+                  </Link>
                 </div>
-              ) : outpassRequests.length === 0 ? (
-                <p className="text-muted-foreground text-center py-6">No outpass requests</p>
-              ) : (
-                <div className="space-y-3">
-                  {outpassRequests.slice(0, 5).map((request: any) => (
-                    <div
-                      key={request.id}
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">{request.destination}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(request.departure_time).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {request.gate_status && request.gate_status !== "on_campus" && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            request.gate_status === "left"
-                              ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                              : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          }`}>
-                            {request.gate_status === "left" ? "Left" : "Returned"}
-                          </span>
-                        )}
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+                    ))}
+                  </div>
+                ) : outpassRequests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-6">No outpass requests</p>
+                ) : (
+                  <div className="space-y-3">
+                    {outpassRequests.slice(0, 5).map((request: any) => (
+                      <div
+                        key={request.id}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">{request.destination}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(request.departure_time).toLocaleDateString()}
+                          </p>
+                        </div>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
                             request.status === "approved"
@@ -181,12 +177,12 @@ const StaffDashboard = () => {
                           {request.status}
                         </span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="pb-3">
