@@ -163,6 +163,7 @@ export type Database = {
           meeting_type: string
           purpose: string
           requested_time: string
+          scheduled_time: string | null
           staff_id: string
           staff_remarks: string | null
           status: Database["public"]["Enums"]["meeting_status"]
@@ -175,6 +176,7 @@ export type Database = {
           meeting_type: string
           purpose: string
           requested_time: string
+          scheduled_time?: string | null
           staff_id: string
           staff_remarks?: string | null
           status?: Database["public"]["Enums"]["meeting_status"]
@@ -187,6 +189,7 @@ export type Database = {
           meeting_type?: string
           purpose?: string
           requested_time?: string
+          scheduled_time?: string | null
           staff_id?: string
           staff_remarks?: string | null
           status?: Database["public"]["Enums"]["meeting_status"]
@@ -532,7 +535,7 @@ export type Database = {
     Enums: {
       meeting_status: "pending" | "approved" | "rejected" | "completed"
       outpass_status: "pending" | "approved" | "rejected"
-      user_role: "admin" | "staff" | "student"
+      user_role: "admin" | "staff" | "student" | "security"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -662,7 +665,7 @@ export const Constants = {
     Enums: {
       meeting_status: ["pending", "approved", "rejected", "completed"],
       outpass_status: ["pending", "approved", "rejected"],
-      user_role: ["admin", "staff", "student"],
+      user_role: ["admin", "staff", "student", "security"],
     },
   },
 } as const
