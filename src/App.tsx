@@ -27,9 +27,11 @@ import StaffOutpass from "./pages/staff/StaffOutpass";
 import StaffMeetings from "./pages/staff/StaffMeetings";
 import StaffAttendance from "./pages/staff/StaffAttendance";
 import StaffAvailabilityManage from "./pages/staff/StaffAvailabilityManage";
+import StaffManageAvailability from "./pages/staff/StaffManageAvailability";
 
 // Security pages
 import SecurityDashboard from "./pages/security/SecurityDashboard";
+import SecurityHistory from "./pages/security/SecurityHistory";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -89,7 +91,7 @@ const App = () => (
               }
             />
 
-            {/* Staff routes */}
+            {/* Staff routes (includes HOD) */}
             <Route
               path="/staff"
               element={
@@ -130,6 +132,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/staff/manage-availability"
+              element={
+                <ProtectedRoute allowedRoles={["staff"]}>
+                  <StaffManageAvailability />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Security routes */}
             <Route
@@ -137,6 +147,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["security"]}>
                   <SecurityDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/security/history"
+              element={
+                <ProtectedRoute allowedRoles={["security"]}>
+                  <SecurityHistory />
                 </ProtectedRoute>
               }
             />

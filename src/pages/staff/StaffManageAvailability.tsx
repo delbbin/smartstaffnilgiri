@@ -27,11 +27,6 @@ const StaffManageAvailability = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Only HOD can access this page
-  if (profile?.role === "staff" && !isHod) {
-    return <Navigate to="/staff" replace />;
-  }
-
   useEffect(() => {
     const fetchStaff = async () => {
       const { data } = await supabase
@@ -56,6 +51,11 @@ const StaffManageAvailability = () => {
     };
     fetchSlots();
   }, [selectedStaffId]);
+
+  // Only HOD can access this page
+  if (profile?.role === "staff" && !isHod) {
+    return <Navigate to="/staff" replace />;
+  }
 
   const addSlot = async (dayOfWeek: number) => {
     if (!selectedStaffId) return;

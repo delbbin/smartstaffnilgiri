@@ -35,6 +35,10 @@ const StaffOutpass = () => {
   const [remarks, setRemarks] = useState("");
   const [processing, setProcessing] = useState(false);
 
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
   // Only HOD and admin can access this page
   if (profile?.role === "staff" && !isHod) {
     return <Navigate to="/staff" replace />;
@@ -54,10 +58,6 @@ const StaffOutpass = () => {
     }
     setLoading(false);
   };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
 
   const handleAction = async (action: "approved" | "rejected") => {
     if (!selectedRequest) return;
