@@ -15,11 +15,12 @@ import {
   Menu,
   X,
   MessageSquare,
-  HelpCircle,
   Activity,
   Clock,
   KeyRound,
   Settings,
+  Shield,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -43,9 +44,17 @@ const studentNavItems: NavItem[] = [
 
 const staffNavItems: NavItem[] = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard },
+  { label: "Meeting Requests", href: "/staff/meetings", icon: Calendar },
+  { label: "My Availability", href: "/staff/availability", icon: Clock },
+  { label: "My Attendance", href: "/staff/attendance", icon: Activity },
+];
+
+const hodNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/staff", icon: LayoutDashboard },
   { label: "Outpass Requests", href: "/staff/outpass", icon: FileText },
   { label: "Meeting Requests", href: "/staff/meetings", icon: Calendar },
   { label: "My Availability", href: "/staff/availability", icon: Clock },
+  { label: "Manage Availability", href: "/staff/manage-availability", icon: Users },
   { label: "My Attendance", href: "/staff/attendance", icon: Activity },
 ];
 
@@ -61,10 +70,11 @@ const adminNavItems: NavItem[] = [
 
 const securityNavItems: NavItem[] = [
   { label: "Dashboard", href: "/security", icon: LayoutDashboard },
+  { label: "History", href: "/security/history", icon: History },
 ];
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isHod } = useAuth();
   const { organization } = useOrganization();
   const location = useLocation();
   const navigate = useNavigate();
@@ -75,7 +85,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       case "admin":
         return adminNavItems;
       case "staff":
-        return staffNavItems;
+        return isHod ? hodNavItems : staffNavItems;
       case "student":
         return studentNavItems;
       case "security":
@@ -90,7 +100,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const getRoleLabel = () => {
     switch (profile?.role) {
       case "admin": return "Administrator";
-      case "staff": return "Staff Member";
+      case "staff": return isHod ? "HOD" : "Staff Member";
       case "student": return "Student";
       case "security": return "Security";
       default: return "User";

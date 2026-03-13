@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase, MeetingRequest, Profile, StaffMember } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -24,6 +26,7 @@ import {
 
 interface MeetingWithStudent extends MeetingRequest {
   student?: Profile;
+  scheduled_time?: string | null;
 }
 
 const StaffMeetings = () => {
@@ -33,12 +36,12 @@ const StaffMeetings = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<MeetingWithStudent | null>(null);
   const [remarks, setRemarks] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
   const [processing, setProcessing] = useState(false);
 
   const fetchData = async () => {
     if (!profile) return;
 
-    // Get staff member info
     const { data: staffData } = await supabase
       .from("staff_members")
       .select("*")
@@ -73,12 +76,19 @@ const StaffMeetings = () => {
 
     setProcessing(true);
     try {
+      const updateData: any = {
+        status: action,
+        staff_remarks: remarks || null,
+      };
+
+      // When approving, set the scheduled time
+      if (action === "approved" && scheduledTime) {
+        updateData.scheduled_time = scheduledTime;
+      }
+
       const { error } = await supabase
         .from("meeting_requests")
-        .update({
-          status: action,
-          staff_remarks: remarks || null,
-        })
+        .update(updateData)
         .eq("id", selectedRequest.id);
 
       if (error) throw error;
@@ -86,6 +96,7 @@ const StaffMeetings = () => {
       toast.success(`Meeting ${action} successfully`);
       setSelectedRequest(null);
       setRemarks("");
+      setScheduledTime("");
       fetchData();
     } catch (error: any) {
       toast.error(error.message || "Failed to process request");
@@ -161,12 +172,16 @@ const StaffMeetings = () => {
                           <p className="text-sm text-muted-foreground mb-2">{request.purpose}</p>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3" />
-                            <span>{new Date(request.requested_time).toLocaleString()}</span>
+                            <span>Requested: {new Date(request.requested_time).toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
                       <Button
-                        onClick={() => setSelectedRequest(request)}
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setScheduledTime("");
+                          setRemarks("");
+                        }}
                         className="gradient-primary text-primary-foreground"
                       >
                         Review
@@ -202,13 +217,21 @@ const StaffMeetings = () => {
                             <span className="text-sm font-medium text-primary">{request.meeting_type}</span>
                           </div>
                           <p className="text-sm text-muted-foreground">{request.purpose}</p>
+                          {request.scheduled_time && (
+                            <p className="text-sm font-medium text-success mt-1">
+                              📅 Scheduled: {new Date(request.scheduled_time).toLocaleString()}
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(request.requested_time).toLocaleString()}
+                            Requested: {new Date(request.requested_time).toLocaleString()}
                           </p>
                         </div>
                       </div>
                       <Button
-                        onClick={() => setSelectedRequest(request)}
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setRemarks("");
+                        }}
                         variant="outline"
                       >
                         Mark Complete
@@ -276,11 +299,27 @@ const StaffMeetings = () => {
                   <p><span className="font-medium">Student:</span> {selectedRequest.student?.full_name}</p>
                   <p><span className="font-medium">Type:</span> {selectedRequest.meeting_type}</p>
                   <p><span className="font-medium">Purpose:</span> {selectedRequest.purpose}</p>
-                  <p><span className="font-medium">Time:</span> {new Date(selectedRequest.requested_time).toLocaleString()}</p>
+                  <p><span className="font-medium">Requested Time:</span> {new Date(selectedRequest.requested_time).toLocaleString()}</p>
                 </div>
 
+                {/* Schedule date/time when approving */}
+                {selectedRequest.status === "pending" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduled-time">Set Meeting Date & Time</Label>
+                    <Input
+                      id="scheduled-time"
+                      type="datetime-local"
+                      value={scheduledTime}
+                      onChange={(e) => setScheduledTime(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Set the actual meeting date and time. This will be visible to the student.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Remarks (Optional)</label>
+                  <Label>Remarks (Optional)</Label>
                   <Textarea
                     placeholder="Add any remarks..."
                     value={remarks}

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Shield,
   Users,
@@ -38,8 +39,7 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
   const [rollNumber, setRollNumber] = useState("");
-  const [dob, setDob] = useState("");
-  const [orgName, setOrgName] = useState("");
+  const [isHod, setIsHod] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,14 +64,17 @@ const Login = () => {
       toast.error("Passwords do not match");
       return;
     }
+    if (selectedRole === "security" && !phone) {
+      toast.error("Phone number is required for security role");
+      return;
+    }
     setLoading(true);
     try {
       await signUp(email, password, fullName, selectedRole, {
         phone,
         department,
         rollNumber,
-        dateOfBirth: dob,
-        orgName,
+        isHod: isHod ? "true" : "false",
       });
       toast.success("Account created! You can now log in.");
     } catch (error) {
@@ -91,9 +94,9 @@ const Login = () => {
   }
 
   const roleConfig = {
-    admin: { icon: Shield, color: "text-destructive", bg: "bg-destructive/10", label: "Administrator" },
     staff: { icon: Users, color: "text-primary", bg: "bg-primary/10", label: "Staff Member" },
     student: { icon: BookOpen, color: "text-accent", bg: "bg-accent/10", label: "Student" },
+    security: { icon: Shield, color: "text-destructive", bg: "bg-destructive/10", label: "Security" },
   };
 
   return (
@@ -108,7 +111,7 @@ const Login = () => {
               <Building2 className="w-8 h-8 text-primary-foreground" />
             </div>
             <h1 className="text-3xl font-display font-bold">StaffHub</h1>
-            <p className="text-muted-foreground mt-1">Create or join your organization workspace</p>
+            <p className="text-muted-foreground mt-1">Student Outpass & Meeting Request System</p>
           </div>
 
           <Card className="shadow-card border-border/50">
@@ -171,27 +174,15 @@ const Login = () => {
               <TabsContent value="signup" className="mt-0">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-xl">Create Account</CardTitle>
-                  <CardDescription>Set up your organization workspace</CardDescription>
+                  <CardDescription>Sign up as Staff, Student, or Security</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignup} className="space-y-4">
-                    {/* Organization Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-org">Organization Name</Label>
-                      <Input
-                        id="signup-org"
-                        placeholder="e.g. Nilgiri College, Acme Corp"
-                        value={orgName}
-                        onChange={(e) => setOrgName(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    {/* Role Selection */}
+                    {/* Role Selection - No Admin */}
                     <div className="space-y-2">
                       <Label>I am a</Label>
                       <div className="grid grid-cols-3 gap-2">
-                        {(["admin", "staff", "student"] as UserRole[]).map((role) => {
+                        {(["staff", "student", "security"] as UserRole[]).map((role) => {
                           const config = roleConfig[role as keyof typeof roleConfig];
                           if (!config) return null;
                           const Icon = config.icon;
@@ -199,7 +190,7 @@ const Login = () => {
                             <button
                               key={role}
                               type="button"
-                              onClick={() => setSelectedRole(role)}
+                              onClick={() => { setSelectedRole(role); setIsHod(false); }}
                               className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 text-xs font-medium capitalize ${
                                 selectedRole === role
                                   ? "border-primary bg-primary/5 text-primary shadow-sm"
@@ -236,11 +227,22 @@ const Login = () => {
                       <Input id="signup-confirm-password" type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
                     </div>
 
+                    {/* Phone - required for security, optional for others */}
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone">Phone (optional)</Label>
-                      <Input id="signup-phone" type="tel" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                      <Label htmlFor="signup-phone">
+                        Phone {selectedRole === "security" ? "(Required)" : "(Optional)"}
+                      </Label>
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        placeholder="+91 9876543210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required={selectedRole === "security"}
+                      />
                     </div>
 
+                    {/* Student fields */}
                     {selectedRole === "student" && (
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
@@ -254,15 +256,33 @@ const Login = () => {
                       </div>
                     )}
 
-                    {(selectedRole === "staff" || selectedRole === "admin") && (
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-dept-staff">Department</Label>
-                        <Input id="signup-dept-staff" placeholder="Computer Science" value={department} onChange={(e) => setDepartment(e.target.value)} />
-                      </div>
+                    {/* Staff fields */}
+                    {selectedRole === "staff" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-dept-staff">Department</Label>
+                          <Input id="signup-dept-staff" placeholder="Computer Science" value={department} onChange={(e) => setDepartment(e.target.value)} />
+                        </div>
+                        <div className="flex items-center space-x-2 p-3 rounded-lg border border-border bg-muted/30">
+                          <Checkbox
+                            id="is-hod"
+                            checked={isHod}
+                            onCheckedChange={(checked) => setIsHod(checked === true)}
+                          />
+                          <Label htmlFor="is-hod" className="text-sm font-medium cursor-pointer">
+                            I am the Head of Department (HOD)
+                          </Label>
+                        </div>
+                        {isHod && (
+                          <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
+                            As HOD, you will have access to approve/reject student outpass requests and manage staff availability.
+                          </p>
+                        )}
+                      </>
                     )}
 
                     <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
-                      {loading ? "Creating workspace..." : "Create Workspace & Account"}
+                      {loading ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
                 </CardContent>

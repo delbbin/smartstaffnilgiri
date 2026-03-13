@@ -41,9 +41,13 @@ const meetingTypes = [
   "Other",
 ];
 
+interface MeetingRequestWithScheduled extends MeetingRequest {
+  scheduled_time?: string | null;
+}
+
 const StudentMeetings = () => {
   const { profile } = useAuth();
-  const [requests, setRequests] = useState<MeetingRequest[]>([]);
+  const [requests, setRequests] = useState<MeetingRequestWithScheduled[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -67,7 +71,7 @@ const StudentMeetings = () => {
       supabase.from("staff_members").select("*").order("name"),
     ]);
 
-    if (meetingsRes.data) setRequests(meetingsRes.data as MeetingRequest[]);
+    if (meetingsRes.data) setRequests(meetingsRes.data as MeetingRequestWithScheduled[]);
     if (staffRes.data) setStaffMembers(staffRes.data as StaffMember[]);
     setLoading(false);
   };
@@ -92,7 +96,6 @@ const StudentMeetings = () => {
 
       if (error) throw error;
 
-      // Get selected tutor's email to send notification
       const selectedTutor = staffMembers.find((s) => s.id === selectedStaff);
       if (selectedTutor?.email) {
         await supabase.functions.invoke("send-email", {
@@ -158,7 +161,7 @@ const StudentMeetings = () => {
           <div>
             <h1 className="text-2xl font-display font-bold">Meeting Requests</h1>
             <p className="text-muted-foreground">
-              Schedule meetings with tutors for notebook signing, no-due certificates, etc.
+              Schedule meetings with staff members
             </p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -174,15 +177,15 @@ const StudentMeetings = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Select Tutor</Label>
+                  <Label>Select Staff Member</Label>
                   <Select value={selectedStaff} onValueChange={setSelectedStaff} required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a tutor" />
+                      <SelectValue placeholder="Choose a staff member" />
                     </SelectTrigger>
                     <SelectContent>
                       {staffMembers.map((staff) => (
                         <SelectItem key={staff.id} value={staff.id}>
-                          {staff.name} {staff.is_hod && "(HOD)"}
+                          {staff.name} {staff.is_hod && "(HOD)"} — {staff.department}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -270,14 +273,24 @@ const StudentMeetings = () => {
                           <span className="text-sm font-medium text-primary">{request.meeting_type}</span>
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">{request.purpose}</p>
+                        
+                        {/* Show scheduled time if set by staff */}
+                        {request.scheduled_time && (
+                          <div className="p-2 bg-success/10 border border-success/30 rounded-lg mb-2">
+                            <p className="text-sm font-medium text-success">
+                              📅 Scheduled Meeting: {new Date(request.scheduled_time).toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span>{new Date(request.requested_time).toLocaleString()}</span>
+                            <span>Requested: {new Date(request.requested_time).toLocaleString()}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            <span>Requested {new Date(request.created_at).toLocaleDateString()}</span>
+                            <span>Submitted {new Date(request.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
                         {request.staff_remarks && (
