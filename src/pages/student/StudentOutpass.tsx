@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, OutpassRequest } from "@/lib/supabase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,8 +32,8 @@ const StudentOutpass = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [hodName, setHodName] = useState<string | null>(null);
 
-  // Form state
   const [reason, setReason] = useState("");
   const [destination, setDestination] = useState("");
   const [departureTime, setDepartureTime] = useState("");
@@ -41,27 +41,33 @@ const StudentOutpass = () => {
 
   const fetchRequests = async () => {
     if (!profile) return;
-
     const { data, error } = await supabase
       .from("outpass_requests")
       .select("*")
       .eq("student_id", profile.id)
       .order("created_at", { ascending: false });
-
-    if (!error && data) {
-      setRequests(data as OutpassRequest[]);
-    }
+    if (!error && data) setRequests(data as OutpassRequest[]);
     setLoading(false);
+  };
+
+  const fetchHodName = async () => {
+    const { data } = await supabase
+      .from("staff_members")
+      .select("name")
+      .eq("is_hod", true)
+      .limit(1)
+      .single();
+    if (data) setHodName(data.name);
   };
 
   useEffect(() => {
     fetchRequests();
+    fetchHodName();
   }, [profile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
-
     setSubmitting(true);
     try {
       const { error } = await supabase.from("outpass_requests").insert({
@@ -71,33 +77,52 @@ const StudentOutpass = () => {
         departure_time: departureTime,
         return_time: returnTime,
       });
-
       if (error) throw error;
 
-      // Get HOD email to send notification
+      // Send notification to HOD
       const { data: hodData } = await supabase
         .from("staff_members")
-        .select("email, name")
-        .eq("is_hod", true)
-        .single();
+        .select("email, name, profile_id")
+        .eq("is_hod", true);
 
-      if (hodData?.email) {
-        // Send email notification to HOD
-        await supabase.functions.invoke("send-email", {
-          body: {
-            to: hodData.email,
-            subject: `New Outpass Request from ${profile.full_name}`,
-            html: `
-              <h2>New Outpass Request</h2>
-              <p><strong>Student:</strong> ${profile.full_name}</p>
-              <p><strong>Destination:</strong> ${destination}</p>
-              <p><strong>Reason:</strong> ${reason}</p>
-              <p><strong>Departure:</strong> ${new Date(departureTime).toLocaleString()}</p>
-              <p><strong>Return:</strong> ${new Date(returnTime).toLocaleString()}</p>
-              <p>Please review and approve/reject this request.</p>
-            `,
-          },
-        });
+      if (hodData && hodData.length > 0) {
+        // Insert in-app notifications for all HODs
+        const notifications = [];
+        for (const hod of hodData) {
+          if (hod.profile_id) {
+            const { data: hodProfile } = await supabase
+              .from("profiles")
+              .select("user_id")
+              .eq("id", hod.profile_id)
+              .single();
+            if (hodProfile) {
+              notifications.push({
+                user_id: hodProfile.user_id,
+                title: "New Outpass Request",
+                message: `${profile.full_name} has requested an outpass to ${destination}`,
+                type: "outpass",
+              });
+            }
+          }
+          // Send email notification
+          if (hod.email) {
+            supabase.functions.invoke("send-email", {
+              body: {
+                to: hod.email,
+                subject: `New Outpass Request from ${profile.full_name}`,
+                html: `<h2>New Outpass Request</h2>
+                  <p><strong>Student:</strong> ${profile.full_name}</p>
+                  <p><strong>Destination:</strong> ${destination}</p>
+                  <p><strong>Reason:</strong> ${reason}</p>
+                  <p><strong>Departure:</strong> ${new Date(departureTime).toLocaleString()}</p>
+                  <p><strong>Return:</strong> ${new Date(returnTime).toLocaleString()}</p>`,
+              },
+            });
+          }
+        }
+        if (notifications.length > 0) {
+          await supabase.from("notifications").insert(notifications);
+        }
       }
 
       toast.success("Outpass request submitted! Awaiting HOD approval.");
@@ -116,12 +141,9 @@ const StudentOutpass = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "approved":
-        return <CheckCircle className="w-5 h-5 text-success" />;
-      case "rejected":
-        return <XCircle className="w-5 h-5 text-destructive" />;
-      default:
-        return <AlertCircle className="w-5 h-5 text-warning" />;
+      case "approved": return <CheckCircle className="w-5 h-5 text-success" />;
+      case "rejected": return <XCircle className="w-5 h-5 text-destructive" />;
+      default: return <AlertCircle className="w-5 h-5 text-warning" />;
     }
   };
 
@@ -158,55 +180,27 @@ const StudentOutpass = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="destination">Destination</Label>
-                  <Input
-                    id="destination"
-                    placeholder="Where are you going?"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    required
-                  />
+                  <Input id="destination" placeholder="Where are you going?" value={destination} onChange={(e) => setDestination(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="reason">Reason</Label>
-                  <Textarea
-                    id="reason"
-                    placeholder="Why do you need to leave?"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    required
-                  />
+                  <Textarea id="reason" placeholder="Why do you need to leave?" value={reason} onChange={(e) => setReason(e.target.value)} required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="departure">Departure Time</Label>
-                    <Input
-                      id="departure"
-                      type="datetime-local"
-                      value={departureTime}
-                      onChange={(e) => setDepartureTime(e.target.value)}
-                      required
-                    />
+                    <Input id="departure" type="datetime-local" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="return">Return Time</Label>
-                    <Input
-                      id="return"
-                      type="datetime-local"
-                      value={returnTime}
-                      onChange={(e) => setReturnTime(e.target.value)}
-                      required
-                    />
+                    <Input id="return" type="datetime-local" value={returnTime} onChange={(e) => setReturnTime(e.target.value)} required />
                   </div>
                 </div>
                 <div className="bg-muted p-3 rounded-lg text-sm text-muted-foreground">
                   <p className="font-medium text-foreground mb-1">Note:</p>
-                  <p>Your request will be sent to Dr. Archana (HOD) for approval.</p>
+                  <p>Your request will be sent to {hodName || "the HOD"} for approval.</p>
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full gradient-primary text-primary-foreground"
-                  disabled={submitting}
-                >
+                <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={submitting}>
                   {submitting ? "Submitting..." : "Submit Request"}
                 </Button>
               </form>
@@ -225,9 +219,7 @@ const StudentOutpass = () => {
             <CardContent className="py-12 text-center">
               <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Outpass Requests</h3>
-              <p className="text-muted-foreground mb-4">
-                You haven't made any outpass requests yet.
-              </p>
+              <p className="text-muted-foreground mb-4">You haven't made any outpass requests yet.</p>
               <Button onClick={() => setDialogOpen(true)} className="gradient-primary text-primary-foreground">
                 Create Your First Request
               </Button>
@@ -250,10 +242,7 @@ const StudentOutpass = () => {
                         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span>
-                              {new Date(request.departure_time).toLocaleString()} -{" "}
-                              {new Date(request.return_time).toLocaleString()}
-                            </span>
+                            <span>{new Date(request.departure_time).toLocaleString()} - {new Date(request.return_time).toLocaleString()}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -268,15 +257,11 @@ const StudentOutpass = () => {
                         )}
                       </div>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                        request.status === "approved"
-                          ? "bg-success text-success-foreground"
-                          : request.status === "rejected"
-                          ? "bg-destructive text-destructive-foreground"
-                          : "bg-warning text-warning-foreground"
-                      }`}
-                    >
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                      request.status === "approved" ? "bg-success text-success-foreground"
+                        : request.status === "rejected" ? "bg-destructive text-destructive-foreground"
+                        : "bg-warning text-warning-foreground"
+                    }`}>
                       {request.status}
                     </span>
                   </div>
