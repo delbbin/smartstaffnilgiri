@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { supabase, StaffMember, MeetingRequest } from "@/lib/supabase";
+import { supabase, StaffMember, StaffAvailability } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Circle } from "lucide-react";
 
 interface StaffPresence {
   staff: StaffMember;
-  status: "in-meeting" | "available" | "unavailable";
-  currentMeeting?: MeetingRequest;
+  status: "available" | "busy" | "unavailable";
+  availabilitySlot?: StaffAvailability;
 }
 
 export const StaffPresenceWidget = ({ compact = false }: { compact?: boolean }) => {
@@ -14,48 +14,43 @@ export const StaffPresenceWidget = ({ compact = false }: { compact?: boolean }) 
   const [loading, setLoading] = useState(true);
 
   const fetchPresence = async () => {
-    const now = new Date().toISOString();
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM
 
-    const [staffRes, meetingRes] = await Promise.all([
+    const [staffRes, availRes, meetingRes] = await Promise.all([
       supabase.from("staff_members").select("*").order("name"),
-      supabase
-        .from("meeting_requests")
-        .select("*")
-        .eq("status", "approved")
-        .lte("requested_time", now),
+      supabase.from("staff_availability").select("*").eq("day_of_week", dayOfWeek).eq("is_available", true),
+      supabase.from("meeting_requests").select("*").eq("status", "approved"),
     ]);
 
     const staffMembers = (staffRes.data || []) as StaffMember[];
-    const approvedMeetings = (meetingRes.data || []) as MeetingRequest[];
+    const availabilities = (availRes.data || []) as StaffAvailability[];
+    const meetings = meetingRes.data || [];
 
-    // A meeting is "active" if it was approved and requested_time is within last 1 hour
+    // Check active meetings (within 1 hour of scheduled/requested time)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     const presence: StaffPresence[] = staffMembers.map((staff) => {
-      const activeMeeting = approvedMeetings.find(
-        (m) => m.staff_id === staff.id && m.requested_time >= oneHourAgo
+      const activeMeeting = meetings.find(
+        (m: any) => m.staff_id === staff.id &&
+          ((m.scheduled_time && m.scheduled_time >= oneHourAgo && m.scheduled_time <= oneHourFromNow) ||
+           (m.requested_time >= oneHourAgo && m.requested_time <= oneHourFromNow))
       );
 
       if (activeMeeting) {
-        return { staff, status: "in-meeting", currentMeeting: activeMeeting };
+        return { staff, status: "busy" as const };
       }
 
-      // Check if staff has any approved meetings today
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-
-      const todayMeetings = approvedMeetings.filter(
-        (m) =>
-          m.staff_id === staff.id &&
-          m.requested_time >= todayStart.toISOString() &&
-          m.requested_time <= todayEnd.toISOString()
+      const slot = availabilities.find(
+        (a) => a.staff_id === staff.id && a.start_time <= currentTime && a.end_time >= currentTime
       );
 
       return {
         staff,
-        status: todayMeetings.length > 0 ? "available" : "unavailable",
+        status: slot ? "available" as const : "unavailable" as const,
+        availabilitySlot: slot,
       };
     });
 
@@ -65,30 +60,17 @@ export const StaffPresenceWidget = ({ compact = false }: { compact?: boolean }) 
 
   useEffect(() => {
     fetchPresence();
-
-    // Subscribe to realtime changes on meeting_requests
+    const interval = setInterval(fetchPresence, 30000);
     const channel = supabase
       .channel("staff-presence")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "meeting_requests" },
-        () => {
-          fetchPresence();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "staff_availability" }, () => fetchPresence())
+      .on("postgres_changes", { event: "*", schema: "public", table: "meeting_requests" }, () => fetchPresence())
       .subscribe();
-
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchPresence, 30000);
-
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
+    return () => { supabase.removeChannel(channel); clearInterval(interval); };
   }, []);
 
   const statusConfig = {
-    "in-meeting": { color: "text-warning", bg: "bg-warning/10", label: "In Meeting" },
+    busy: { color: "text-warning", bg: "bg-warning/10", label: "In Meeting" },
     available: { color: "text-success", bg: "bg-success/10", label: "Available" },
     unavailable: { color: "text-muted-foreground", bg: "bg-muted", label: "Not Available" },
   };
@@ -96,19 +78,8 @@ export const StaffPresenceWidget = ({ compact = false }: { compact?: boolean }) 
   if (loading) {
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Staff Presence
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 bg-muted animate-pulse rounded" />
-            ))}
-          </div>
-        </CardContent>
+        <CardHeader className="pb-3"><CardTitle className="text-lg flex items-center gap-2"><Users className="w-5 h-5" />Staff Presence</CardTitle></CardHeader>
+        <CardContent><div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-10 bg-muted animate-pulse rounded" />)}</div></CardContent>
       </Card>
     );
   }
@@ -124,8 +95,7 @@ export const StaffPresenceWidget = ({ compact = false }: { compact?: boolean }) 
             Live Staff Presence
           </CardTitle>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Circle className="w-2 h-2 fill-success text-success animate-pulse" />
-            Live
+            <Circle className="w-2 h-2 fill-success text-success animate-pulse" />Live
           </span>
         </div>
       </CardHeader>
@@ -134,23 +104,21 @@ export const StaffPresenceWidget = ({ compact = false }: { compact?: boolean }) 
           {displayList.map((item) => {
             const config = statusConfig[item.status];
             return (
-              <div
-                key={item.staff.id}
-                className={`flex items-center justify-between p-3 rounded-lg ${config.bg}`}
-              >
+              <div key={item.staff.id} className={`flex items-center justify-between p-3 rounded-lg ${config.bg}`}>
                 <div className="flex items-center gap-3">
                   <Circle className={`w-3 h-3 fill-current ${config.color}`} />
                   <div>
                     <p className="font-medium text-sm">{item.staff.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.staff.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.staff.title} — {item.staff.department}</p>
                   </div>
                 </div>
-                <span className={`text-xs font-medium ${config.color}`}>
-                  {config.label}
-                </span>
+                <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
               </div>
             );
           })}
+          {displayList.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No staff members found</p>
+          )}
         </div>
       </CardContent>
     </Card>
