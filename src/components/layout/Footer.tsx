@@ -15,8 +15,8 @@ export const Footer = () => {
               <span className="font-display font-bold text-xl">StaffHub</span>
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
-              Multi-tenant SaaS platform for staff availability, outpass management,
-              meeting scheduling, and organizational analytics.
+              Campus management platform for staff availability, outpass management,
+              meeting scheduling, and analytics.
             </p>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
@@ -45,10 +45,8 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Platform</h4>
             <ul className="space-y-2 text-muted-foreground text-sm">
-              <li>Multi-Tenant Workspaces</li>
-              <li>AI Organization Builder</li>
               <li>Staff Availability Tracking</li>
-              <li>Outpass & QR Verification</li>
+              <li>Outpass Management</li>
               <li>Meeting Scheduler</li>
               <li>Analytics & Reports</li>
             </ul>
