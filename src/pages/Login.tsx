@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const navigate = useNavigate();
+  
   const { signIn, signUp, profile } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
