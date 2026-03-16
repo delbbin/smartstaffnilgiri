@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Building2, Mail, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { forwardRef } from "react";
+import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
 type FooterProps = React.ComponentPropsWithoutRef<"footer">;
 

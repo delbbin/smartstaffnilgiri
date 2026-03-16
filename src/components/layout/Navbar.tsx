@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Building2, Menu, X, LogOut, User, LayoutDashboard } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, type ComponentPropsWithoutRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
