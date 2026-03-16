@@ -172,24 +172,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
+    let syncQueue = Promise.resolve();
 
     const syncSession = async (nextSession: Session | null) => {
       if (!isMounted) return;
 
+      setLoading(true);
       setSession(nextSession);
       const authUser = nextSession?.user ?? null;
       setUser(authUser);
       await loadUserState(authUser);
     };
 
+    const queueSync = (nextSession: Session | null) => {
+      syncQueue = syncQueue
+        .then(() => syncSession(nextSession))
+        .catch((error) => {
+          console.error("Error syncing auth session:", error);
+          if (isMounted) setLoading(false);
+        });
+    };
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      void syncSession(nextSession);
+      queueSync(nextSession);
     });
 
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      void syncSession(initialSession);
+      queueSync(initialSession);
     });
 
     return () => {
