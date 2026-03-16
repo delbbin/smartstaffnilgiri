@@ -3,7 +3,7 @@ import { Building2, Mail, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
-type FooterProps = React.ComponentPropsWithoutRef<"footer">;
+type FooterProps = ComponentPropsWithoutRef<"footer">;
 
 export const Footer = forwardRef<HTMLElement, FooterProps>(({ className, ...props }, ref) => {
   return (

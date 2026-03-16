@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type NavbarProps = React.ComponentPropsWithoutRef<"nav">;
+type NavbarProps = ComponentPropsWithoutRef<"nav">;
 
 export const Navbar = forwardRef<HTMLElement, NavbarProps>(({ className, ...props }, ref) => {
   const { user, profile, signOut } = useAuth();
