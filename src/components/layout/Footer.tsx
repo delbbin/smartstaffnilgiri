@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { Building2, Mail, Globe } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { forwardRef } from "react";
 
-export const Footer = () => {
+type FooterProps = React.ComponentPropsWithoutRef<"footer">;
+
+export const Footer = forwardRef<HTMLElement, FooterProps>(({ className, ...props }, ref) => {
   return (
-    <footer className="bg-card border-t border-border">
+    <footer ref={ref} className={cn("bg-card border-t border-border", className)} {...props}>
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
@@ -15,8 +19,7 @@ export const Footer = () => {
               <span className="font-display font-bold text-xl">StaffHub</span>
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
-              Campus management platform for staff availability, outpass management,
-              meeting scheduling, and analytics.
+              Campus management platform for staff availability, outpass management, meeting scheduling, and analytics.
             </p>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
@@ -34,10 +37,26 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link></li>
-              <li><Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">Login</Link></li>
-              <li><Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link></li>
-              <li><Link to="/feedback" className="text-muted-foreground hover:text-foreground transition-colors">Feedback</Link></li>
+              <li>
+                <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/feedback" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Feedback
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -59,4 +78,6 @@ export const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";

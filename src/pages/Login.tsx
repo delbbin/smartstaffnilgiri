@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const navigate = useNavigate();
+  
   const { signIn, signUp, profile } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
