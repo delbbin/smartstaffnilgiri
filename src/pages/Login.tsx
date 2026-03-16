@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,8 +89,7 @@ const Login = () => {
       profile.role === "admin" ? "/admin" :
       profile.role === "staff" ? "/staff" :
       profile.role === "security" ? "/security" : "/student";
-    navigate(redirectPath);
-    return null;
+    return <Navigate to={redirectPath} replace />;
   }
 
   const roleConfig = {
