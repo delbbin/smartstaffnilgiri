@@ -89,8 +89,7 @@ const Login = () => {
       profile.role === "admin" ? "/admin" :
       profile.role === "staff" ? "/staff" :
       profile.role === "security" ? "/security" : "/student";
-    navigate(redirectPath);
-    return null;
+    return <Navigate to={redirectPath} replace />;
   }
 
   const roleConfig = {
